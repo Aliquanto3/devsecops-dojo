@@ -56,11 +56,14 @@ def _existing(found: machine.Findings, repo) -> set[str]:  # noqa: ANN001 - Path
     return {path for path in found.lines if (repo / path).is_file()}
 
 
-def _prepare_environment(ctx: OpContext, command: ToolCommand, allow: Allowlist) -> bool:
-    """Garantit `cache/venv/` ; faux (et message) si l'outil reste inutilisable."""
+def prepare_environment(ctx: OpContext, tool_id: str, allow: Allowlist) -> bool:
+    """Garantit `cache/venv/` ; faux (et message) si l'outil `tool_id` reste inutilisable.
+
+    Aussi appelée avant un `git commit` gardé par `pre-commit` : un espace copié depuis l'ancien
+    dossier de données arrive sans environnement, recréé ici hors ligne."""
     venv = toolrun.venv_dir(ctx.layout.root)
     usable = toolrun.venv_python(venv) is not None and (
-        toolrun.resolve(command.name, ctx.settings, venv=venv).ok
+        toolrun.resolve(tool_id, ctx.settings, venv=venv).ok
     )
     if not usable:
         # Secours : l'ouverture de l'espace crée normalement l'environnement (hors ligne) ;
@@ -87,7 +90,7 @@ def run(ctx: OpContext, command: ToolCommand, allow: Allowlist) -> int:
     settings = ctx.settings
     venv = toolrun.venv_dir(ctx.layout.root)
     repo = ctx.layout.repo
-    if not _prepare_environment(ctx, command, allow):
+    if not prepare_environment(ctx, command.name, allow):
         return EXIT_INTERRUPTED if ctx.interrupted else EXIT_UNAVAILABLE
     try:
         handle = toolrun.spawn_tool(

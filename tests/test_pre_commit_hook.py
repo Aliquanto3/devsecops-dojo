@@ -404,3 +404,26 @@ def test_vrai_hook_pre_commit(git_path: Path, track: str) -> None:
         assert len(_commits_ahead(space)) == 1
     finally:
         space.manager.close()
+
+
+def test_espace_migre_sans_venv_recree_avant_le_commit_garde(
+    box: Box, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Migration : les venvs ne sont pas copiés ; le commit gardé recrée l'environnement
+    (pre-commit) avant de lancer git, au lieu de laisser le hook refuser faute d'outil."""
+    from devsecops_dojo.terminal import tools
+
+    asked: list[str] = []
+
+    def prepare(ctx, tool_id, allow):  # noqa: ANN001, ANN202
+        asked.append(tool_id)
+        return False  # recréation impossible : git n'est pas lancé
+
+    monkeypatch.setattr(tools, "prepare_environment", prepare)
+    _fake_hook(box.layout, tmp_path, exit_code=0, refusal=None)
+    assert box.run(f"git add {FILE}")[1] == 0
+    _op, code, _events = box.run("git commit -m x")
+    assert asked == ["pre-commit"] and code == tools.EXIT_UNAVAILABLE
+    assert _commits_ahead(box) == []
+    asked.clear()
+    assert box.run("git status")[1] == 0 and asked == []  # seules les commandes gardées

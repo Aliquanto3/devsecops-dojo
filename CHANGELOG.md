@@ -19,8 +19,9 @@
 - **Dossier de données** : `WaveDevSecOps` devient `DevSecOpsDojo` (`%LOCALAPPDATA%\DevSecOpsDojo`,
   `~/Library/Application Support/DevSecOpsDojo`, `~/.local/share/DevSecOpsDojo`). Au premier lancement
   (application ou installeur), l'ancien dossier est copié vers le nouveau s'il n'existe pas encore,
-  sans le sous-dossier `app/` (réinstallé) ni le verrou `app.lock`. L'ancien dossier n'est jamais
-  modifié ni supprimé ; un échec de copie n'empêche pas le démarrage (avertissement, dossier neuf).
+  sans le sous-dossier `app/` (réinstallé), le verrou `app.lock` ni les environnements Python des
+  exercices : ceux-ci sont recréés hors ligne au premier usage (outil, commit gardé, run).
+  L'ancien dossier n'est jamais modifié ni supprimé ; un échec de copie n'empêche pas le démarrage (avertissement, dossier neuf).
   Une variable `DEVSECOPS_DOJO_*` vide vaut absente : l'ancienne variable sert alors de repli.
 - **Espaces copiés** : les balises du pipeline deviennent `dojo:job` / `dojo:end` (l'ancienne forme
   `wds:job` / `wds:end` reste lue), les hooks git posés avant le renommage sont réécrits au

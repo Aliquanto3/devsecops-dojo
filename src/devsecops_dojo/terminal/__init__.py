@@ -124,6 +124,8 @@ def _run_git(ctx: OpContext, command: GitCommand, allow: Allowlist) -> int:
         # Story 7.3 : contourner la barrière que le scénario fait voir ne valide rien.
         ctx.output(allow.message("no_verify"), "refused")
         return EXIT_REFUSED
+    if guarded and not tools.prepare_environment(ctx, "pre-commit", allow):
+        return tools.EXIT_INTERRUPTED if ctx.interrupted else tools.EXIT_UNAVAILABLE
     if command.sub == "commit":
         hooks.clear_refusal(ctx.layout)
     try:

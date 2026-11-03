@@ -176,9 +176,17 @@ get_data_dir() {
     esac
 }
 
+# prune_venvs <dossier> : retire les environnements Python copiés (dossiers à pyvenv.cfg) ;
+# leurs chemins absolus visent l'ancien dossier, l'application les recrée hors ligne.
+prune_venvs() {
+    find "$1" -type f -name pyvenv.cfg 2>/dev/null | while IFS= read -r _cfg; do
+        rm -rf "$(dirname "$_cfg")" || exit 1
+    done
+}
+
 # migrate_legacy_data : copie l'ancien dossier de données (nom « WaveDevSecOps ») vers DATA_DIR
 # si celui-ci n'existe pas encore et si l'utilisateur n'a pas choisi son dossier. Sans le
-# sous-dossier app/ (réinstallé) ni le verrou app.lock. Jamais bloquant, jamais de suppression de l'ancien dossier.
+# sous-dossier app/ (réinstallé), ni le verrou app.lock, ni les environnements Python. Jamais bloquant, jamais de suppression de l'ancien dossier.
 migrate_legacy_data() {
     [ -z "$(trim "${DEVSECOPS_DOJO_DATA_DIR:-}")" ] || return 0
     _old=$(printf '%s' "$DATA_DIR" | sed 's#/DevSecOpsDojo$#/WaveDevSecOps#')
@@ -191,7 +199,7 @@ migrate_legacy_data() {
             [ -e "$_e" ] || continue
             case $_e in app | app.lock) continue ;; esac
             cp -R "$_e" "$_stage/" || exit 1
-        done)         && mv "$_stage" "$DATA_DIR" 2>/dev/null; then
+        done) && prune_venvs "$_stage" && mv "$_stage" "$DATA_DIR" 2>/dev/null; then
         info "Données de l'ancienne version copiées depuis $_old."
     else
         rm -rf "$_stage" 2>/dev/null

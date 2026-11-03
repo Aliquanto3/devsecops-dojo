@@ -236,7 +236,9 @@ def test_sync_environment_hors_ligne(tmp_path: Path, monkeypatch: pytest.MonkeyP
     assert env["UV_CACHE_DIR"] == str(tmp_path / "data" / "uv-cache")
     site = toolrun.site_packages(venv)
     assert site is not None
-    assert (site / "_devsecops_dojo_netguard.pth").read_text("utf-8").strip() == "import _devsecops_dojo_netguard"
+    assert (site / "_devsecops_dojo_netguard.pth").read_text(
+        "utf-8"
+    ).strip() == "import _devsecops_dojo_netguard"
     # Sans uv utilisable, aucune exception : l'erreur est rendue.
     monkeypatch.setattr(
         toolrun, "resolve", lambda *a, **k: toolrun.ToolStatus("uv", "missing", reason="absent")
@@ -387,3 +389,36 @@ def test_uv_hors_du_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     launcher.write_text("", encoding="utf-8")
     monkeypatch.setenv("UV", str(launcher))  # posé par `uv run` au lancement de l'application
     assert toolrun._host_candidate(tool, "linux", 1.0)[0] == launcher
+
+
+def test_venv_venu_de_l_ancien_dossier_traite_comme_absent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Migration : un venv dont `pyvenv.cfg` vise `WaveDevSecOps` est recréé, pas réutilisé."""
+    venv = tmp_path / "DevSecOpsDojo" / "workspaces" / "w" / "cache" / "venv"
+    bin_dir = venv / ("Scripts" if sys.platform == "win32" else "bin")
+    bin_dir.mkdir(parents=True)
+    (bin_dir / ("python.exe" if sys.platform == "win32" else "python")).write_text("", "utf-8")
+    (venv / toolrun.LOCK_MARKER).write_text("abc\n", "utf-8")
+    assert toolrun.venv_python(venv) is not None and toolrun.environment_digest(venv) == "abc"
+    old_home = tmp_path / "WaveDevSecOps" / "uv-cache" / "python" / "cpython-3.14" / "bin"
+    (venv / "pyvenv.cfg").write_text(f"home = {old_home}\nversion_info = 3.14\n", "utf-8")
+    assert toolrun.foreign_venv(venv)
+    assert toolrun.venv_python(venv) is None and toolrun.environment_digest(venv) is None
+    # Dans l'ancien dossier lui-même (ancienne version), le même venv reste le sien.
+    own = tmp_path / "WaveDevSecOps" / "workspaces" / "w" / "cache" / "venv"
+    own.mkdir(parents=True)
+    (own / "pyvenv.cfg").write_text(f"home = {old_home}\n", "utf-8")
+    assert not toolrun.foreign_venv(own)
+    # sync_environment repart d'un dossier vide avant `uv sync`.
+    seen: list[bool] = []
+    uv = toolrun.ToolStatus("uv", "ok", "0.9", Path(sys.executable), "host")
+    monkeypatch.setattr(toolrun, "resolve", lambda *a, **k: uv)
+
+    def fake_spawn(argv, **kwargs):  # noqa: ANN001, ANN202
+        seen.append(venv.exists())
+        raise OSError("arrêt du test")
+
+    monkeypatch.setattr(toolrun.procs, "spawn", fake_spawn)
+    toolrun.sync_environment(tmp_path / "repo", venv, Settings(data_dir=tmp_path / "DevSecOpsDojo"))
+    assert seen == [False]

@@ -20,6 +20,7 @@ from typing import Literal
 
 from devsecops_dojo import procs
 from devsecops_dojo.config import (
+    LEGACY_APP_NAME,
     LEGACY_NETGUARD_VARIABLE,
     Settings,
     get_settings,
@@ -285,7 +286,7 @@ def _venv_executable(venv: Path, tool_id: str, platform: str) -> Path | None:
 def _resolve_in_venv(tool: Tool, venv: Path, platform: str) -> ToolStatus:
     """Outil de la chaîne dans l'environnement d'exercice, comparé au `uv.lock` (AD-16)."""
     expected = tool.provisioned_for(family(platform))
-    found = _dist_info(venv, tool.id, platform)
+    found = None if foreign_venv(venv) else _dist_info(venv, tool.id, platform)
     installed = found[1] if found else None
     if found is None or installed is None:
         return ToolStatus(
@@ -460,6 +461,8 @@ def sync_environment(
     uv = resolve("uv", settings)
     if not uv.ok or uv.path is None:
         return procs.ProcResult(returncode=None, error=uv.reason or "uv indisponible")
+    if foreign_venv(venv):
+        shutil.rmtree(venv, ignore_errors=True)  # copie de l'ancien dossier : recréée à neuf
     env = offline_environment(settings)
     env["UV_PROJECT_ENVIRONMENT"] = str(venv)
     argv = [uv.path, "sync", "--offline", "--frozen", "--project", str(project)]
@@ -503,6 +506,8 @@ def lock_digest(project: Path) -> str | None:
 
 def environment_digest(venv: Path) -> str | None:
     """sha256 du `uv.lock` dont `venv` a été créé (marque de `sync_environment`), ou None."""
+    if foreign_venv(venv):
+        return None
     try:
         return (venv / LOCK_MARKER).read_text(encoding="utf-8").strip() or None
     except OSError:
@@ -578,8 +583,25 @@ def with_tools_on_path(
     return out
 
 
+def foreign_venv(venv: Path) -> bool:
+    """Vrai si `venv` vient de l'ancien dossier de données (copie d'avant le renommage) : son
+    `pyvenv.cfg` désigne un interpréteur sous `WaveDevSecOps` alors qu'il n'y est pas lui-même.
+    Un tel environnement est traité comme absent, puis recréé."""
+    try:
+        lines = (venv / "pyvenv.cfg").read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return False
+    values = [line.partition("=")[2].strip() for line in lines if "=" in line]
+    if LEGACY_APP_NAME in venv.absolute().parts:
+        return False
+    return any(LEGACY_APP_NAME in Path(value).parts for value in values if value)
+
+
 def venv_python(venv: Path, platform: str = sys.platform) -> Path | None:
-    """Interpréteur de l'environnement d'exercice, ou None s'il n'existe pas."""
+    """Interpréteur de l'environnement d'exercice, ou None s'il n'existe pas (ou s'il vient
+    de l'ancien dossier de données, `foreign_venv`)."""
+    if foreign_venv(venv):
+        return None
     if family(platform) == "windows":
         candidate = venv / "Scripts" / "python.exe"
     else:

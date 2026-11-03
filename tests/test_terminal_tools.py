@@ -227,7 +227,7 @@ class Box:
 def no_sync(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ni `uv sync` à l'ouverture, ni environnement à vérifier : les outils sont remplacés."""
     monkeypatch.setattr(toolrun, "needs_environment", lambda *a, **k: False)
-    monkeypatch.setattr(tools, "_prepare_environment", lambda *a, **k: True)
+    monkeypatch.setattr(tools, "prepare_environment", lambda *a, **k: True)
 
 
 @pytest.fixture
@@ -506,7 +506,7 @@ def test_secours_cree_l_environnement_et_s_arrete_sur_ctrl_c(
     lint_box: Box, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Report de la 6.6 : le `uv sync` de secours du terminal est interruptible."""
-    monkeypatch.undo()  # retire `no_sync` : on veut le vrai `_prepare_environment`
+    monkeypatch.undo()  # retire `no_sync` : on veut le vrai `prepare_environment`
     real_spawn = procs.spawn
     spawned: list[procs.Handle] = []
 
@@ -601,11 +601,11 @@ def test_secours_resynchronise_un_environnement_sans_l_outil(
         output=lambda *a, **k: None,
     )
     command = _parse("ruff check .")
-    assert tools._prepare_environment(ctx, command, get_allowlist(Settings()))
+    assert tools.prepare_environment(ctx, command.name, get_allowlist(Settings()))
     assert synced == [toolrun.venv_dir(layout.root)]
     # Outil présent et à jour : pas de resynchronisation.
     synced.clear()
     ok = toolrun.ToolStatus("ruff", "ok", "0.13.1", Path(PYTHON), "environment")
     monkeypatch.setattr(toolrun, "resolve", lambda tool_id, *a, **k: ok)
-    assert tools._prepare_environment(ctx, command, get_allowlist(Settings()))
+    assert tools.prepare_environment(ctx, command.name, get_allowlist(Settings()))
     assert synced == []

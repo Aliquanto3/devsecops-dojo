@@ -196,11 +196,12 @@ def migrate_legacy_data_dir(settings: Settings, legacy: Path | None = None) -> b
     """Copie l'ancien dossier de données vers le nouveau, une seule fois.
 
     Rien si l'utilisateur a choisi son dossier (`data_dir`), si le nouveau existe déjà ou si
-    l'ancien est absent. Le sous-dossier `app/` (clone et environnement de l'ancien installeur)
-    et le verrou `app.lock` ne sont pas copiés. La copie passe par un dossier de travail propre
-    au processus puis un renommage : un échec (`OSError` : verrou Windows, disque plein,
-    lancement concurrent) ne bloque jamais le démarrage, laisse l'ancien dossier intact et émet
-    un avertissement.
+    l'ancien est absent. Ne sont pas copiés : le sous-dossier `app/` (clone et environnement de
+    l'ancien installeur), le verrou `app.lock` et les environnements Python (dossiers à
+    `pyvenv.cfg` : chemins absolus, recréés hors ligne au premier usage). La copie passe par un
+    dossier de travail propre au processus puis un renommage : un échec (`OSError` : verrou
+    Windows, disque plein, lancement concurrent) ne bloque jamais le démarrage, laisse l'ancien
+    dossier intact et émet un avertissement.
     Renvoie vrai si la copie a eu lieu.
     """
     if settings.data_dir is not None:
@@ -212,7 +213,11 @@ def migrate_legacy_data_dir(settings: Settings, legacy: Path | None = None) -> b
     staging = target.with_name(f"{target.name}.migration-{os.getpid()}")
 
     def ignore(directory: str, names: list[str]) -> set[str]:
-        return set(LEGACY_SKIPPED) & set(names) if Path(directory) == source else set()
+        here = Path(directory)
+        skipped = set(LEGACY_SKIPPED) & set(names) if here == source else set()
+        # Environnements Python (`cache/venv`, `ci/venv-*`…) : chemins absolus vers l'ancien
+        # dossier, non déplaçables ; recréés hors ligne au premier usage.
+        return skipped | {name for name in names if (here / name / "pyvenv.cfg").is_file()}
 
     try:
         shutil.rmtree(staging, ignore_errors=True)

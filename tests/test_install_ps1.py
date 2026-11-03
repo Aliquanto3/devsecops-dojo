@@ -87,6 +87,10 @@ def test_migration_de_l_ancien_dossier_de_donnees(tmp_path: Path) -> None:
     (old / "app").mkdir(parents=True)
     (old / "progress.json").write_text("{}", encoding="utf-8")
     (old / "app.lock").write_text("verrou", encoding="utf-8")
+    for venv in ("workspaces/w/cache/venv", "workspaces/w/ci/venv-0123456789ab"):
+        (old / venv).mkdir(parents=True)
+        (old / venv / "pyvenv.cfg").write_text("home = C:/x\n", encoding="utf-8")
+    (old / "workspaces" / "w" / "run.json").write_text("{}", encoding="utf-8")
     new = tmp_path / "DevSecOpsDojo"
     env = {
         k: v for k, v in os.environ.items() if not k.upper().startswith(("DEVSECOPS_DOJO_", "WDS_"))
@@ -98,6 +102,9 @@ def test_migration_de_l_ancien_dossier_de_donnees(tmp_path: Path) -> None:
     assert out.returncode == 0, out.stderr
     assert (new / "progress.json").read_text(encoding="utf-8") == "{}"
     assert not (new / "app").exists() and not (new / "app.lock").exists()
+    assert (new / "workspaces" / "w" / "run.json").is_file()
+    assert not (new / "workspaces" / "w" / "cache" / "venv").exists()
+    assert not (new / "workspaces" / "w" / "ci" / "venv-0123456789ab").exists()
     assert (old / "app.lock").exists() and (old / "app").is_dir()
     assert not list(tmp_path.glob("*.migration-*"))
 

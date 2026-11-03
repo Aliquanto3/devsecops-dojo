@@ -91,7 +91,7 @@ function Get-DataDir {
 }
 
 # Copie l'ancien dossier de données (« WaveDevSecOps ») vers le nouveau s'il n'existe pas encore,
-# sans le sous-dossier app\ (réinstallé) ni le verrou app.lock. Jamais bloquant, l'ancien dossier n'est pas modifié.
+# sans le sous-dossier app\ (réinstallé), ni le verrou app.lock, ni les environnements Python. Jamais bloquant, l'ancien dossier n'est pas modifié.
 function Copy-LegacyDataDir([string]$DataDir) {
     if ($env:DEVSECOPS_DOJO_DATA_DIR -and $env:DEVSECOPS_DOJO_DATA_DIR.Trim()) { return }
     $old = Join-Path (Split-Path -Parent $DataDir) 'WaveDevSecOps'
@@ -101,6 +101,14 @@ function Copy-LegacyDataDir([string]$DataDir) {
         New-Item -ItemType Directory -Path $stage -Force | Out-Null
         Get-ChildItem -LiteralPath $old -Force | Where-Object { $_.Name -notin 'app', 'app.lock' } |
             Copy-Item -Destination $stage -Recurse -Force -ErrorAction Stop
+        # Environnements Python copiés (dossiers à pyvenv.cfg) : chemins absolus vers l'ancien
+        # dossier ; l'application les recrée hors ligne au premier usage.
+        $venvs = @(Get-ChildItem -LiteralPath $stage -Recurse -Force -File -Filter 'pyvenv.cfg')
+        foreach ($cfg in $venvs) {
+            if (Test-Path -LiteralPath $cfg.DirectoryName) {
+                Remove-Item -LiteralPath $cfg.DirectoryName -Recurse -Force -ErrorAction Stop
+            }
+        }
         Move-Item -LiteralPath $stage -Destination $DataDir -ErrorAction Stop
         Write-Info "Données de l'ancienne version copiées depuis $old."
     } catch {

@@ -832,3 +832,29 @@ def test_vrais_outils_dans_le_pipeline(tmp_path: Path, git_path: Path) -> None:
         assert seconds <= LIMIT_S
     finally:
         opened.close()
+
+
+def test_environnement_copie_de_l_ancien_dossier_recree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Migration : un `cache/venv` dont `pyvenv.cfg` vise `WaveDevSecOps` n'est pas réutilisé."""
+    layout = Layout(tmp_path / "DevSecOpsDojo" / "workspaces" / "ws")
+    tree = layout.ci / "1-abcdef0"
+    tree.mkdir(parents=True)
+    (tree / "uv.lock").write_text("version = 1" + chr(10), "utf-8")
+    shared = toolrun.venv_dir(layout.root)
+    shared.mkdir(parents=True)
+    (shared / toolrun.LOCK_MARKER).write_text(toolrun.lock_digest(tree) or "", "utf-8")
+    old = tmp_path / "WaveDevSecOps" / "uv-cache" / "python" / "cpython" / "bin"
+    (shared / "pyvenv.cfg").write_text(f"home = {old}" + chr(10), "utf-8")
+    synced: list[Path] = []
+
+    def fake_sync(project, venv, settings=None, **kwargs):  # noqa: ANN001, ANN202
+        synced.append(venv)
+        venv.mkdir(parents=True, exist_ok=True)
+        (venv / toolrun.LOCK_MARKER).write_text(toolrun.lock_digest(project) or "", "utf-8")
+        return procs.ProcResult(0)
+
+    monkeypatch.setattr(toolrun, "sync_environment", fake_sync)
+    env = ci.prepare_environment(tree, layout, Settings(data_dir=tmp_path / "DevSecOpsDojo"))
+    assert env.venv is not None and not env.shared and synced == [env.venv]

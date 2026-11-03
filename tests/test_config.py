@@ -77,6 +77,10 @@ def _legacy_tree(root: Path) -> Path:
     (legacy / "app").mkdir()
     (legacy / "app" / "old.txt").write_text("clone", encoding="utf-8")
     (legacy / "app.lock").write_text("http://127.0.0.1:1/", encoding="utf-8")
+    for venv in ("workspaces/w/cache/venv", "workspaces/w/ci/venv-0123456789ab"):
+        (legacy / venv).mkdir(parents=True)
+        (legacy / venv / "pyvenv.cfg").write_text("home = /ancien/python\n", encoding="utf-8")
+    (legacy / "workspaces" / "w" / "cache" / "ruff").mkdir()
     return legacy
 
 
@@ -91,6 +95,10 @@ def test_migration_copie_sans_toucher_l_ancien(tmp_path: Path) -> None:
     assert (target / "workspaces" / "x.txt").read_text(encoding="utf-8") == "x"
     assert not (target / "app").exists()
     assert not (target / "app.lock").exists()  # verrou de l'ancienne instance, pas une donnée
+    # Environnements Python non déplaçables : recréés au premier usage, le reste de l'espace suit.
+    assert not (target / "workspaces" / "w" / "cache" / "venv").exists()
+    assert not (target / "workspaces" / "w" / "ci" / "venv-0123456789ab").exists()
+    assert (target / "workspaces" / "w" / "cache" / "ruff").is_dir()
     assert (legacy / "progress.json").exists() and (legacy / "app" / "old.txt").exists()
     assert not list(tmp_path.glob("*.migration-*"))
     # Seconde exécution : le nouveau existe, rien ne se passe.
