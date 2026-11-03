@@ -13,9 +13,9 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from wavedevsecops import terminal
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import (
+from devsecops_dojo import terminal
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import (
     INTENTS,
     Operation,
     OperationRefused,
@@ -28,12 +28,12 @@ from wavedevsecops.engine import (
     save_run,
     snapshots,
 )
-from wavedevsecops.engine.operations import QUIZ_REFUSED_TEXT, RESTORE_FAILED_TEXT
-from wavedevsecops.events import Envelope, Kind
-from wavedevsecops.gitio import Git
-from wavedevsecops.progress.facts import ProgressStore
-from wavedevsecops.scenarios import load_scenario
-from wavedevsecops.scenarios.steps.quiz import Args
+from devsecops_dojo.engine.operations import QUIZ_REFUSED_TEXT, RESTORE_FAILED_TEXT
+from devsecops_dojo.events import Envelope, Kind
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.progress.facts import ProgressStore
+from devsecops_dojo.scenarios import load_scenario
+from devsecops_dojo.scenarios.steps.quiz import Args
 
 WAIT = 60.0
 ALLOWLIST = Path(__file__).resolve().parent.parent / "content" / "terminal-allowlist.yaml"
@@ -411,7 +411,7 @@ def test_une_ecriture_en_file_derriere_un_mauvais_choix_est_refusee(make_box) ->
 @pytest.mark.slow
 def test_un_git_en_echec_laisse_l_etat_modifie_coherent(make_box, monkeypatch) -> None:
     box = make_box()
-    from wavedevsecops.terminal import quiz as quiz_module
+    from devsecops_dojo.terminal import quiz as quiz_module
 
     def boom(*args, **kwargs):
         raise RuntimeError("git introuvable")

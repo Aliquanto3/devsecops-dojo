@@ -17,25 +17,25 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import ci, cli, github_sim, procs, toolrun
-from wavedevsecops.ci import findings as parsers
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts import element_id
-from wavedevsecops.contracts.github import (
+from devsecops_dojo import ci, cli, github_sim, procs, toolrun
+from devsecops_dojo.ci import findings as parsers
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts import element_id
+from devsecops_dojo.contracts.github import (
     Check,
     GithubState,
     PullRequest,
     SbomComponent,
     SbomVuln,
 )
-from wavedevsecops.engine import prepare_workspace
-from wavedevsecops.engine.designation import correct, mark_views
-from wavedevsecops.gitio import Git
-from wavedevsecops.projections import EXPLAIN_REFS, project
-from wavedevsecops.scenarios import load_scenario
-from wavedevsecops.scenarios.steps import pr_state
-from wavedevsecops.scenarios.steps._base import StepContext
-from wavedevsecops.wsfs import Layout
+from devsecops_dojo.engine import prepare_workspace
+from devsecops_dojo.engine.designation import correct, mark_views
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.projections import EXPLAIN_REFS, project
+from devsecops_dojo.scenarios import load_scenario
+from devsecops_dojo.scenarios.steps import pr_state
+from devsecops_dojo.scenarios.steps._base import StepContext
+from devsecops_dojo.wsfs import Layout
 
 SCENARIO = Settings().scenarios_path() / "dependance-vulnerable.A.yaml"
 EXERCISE = Settings().content_path() / "exercise"
@@ -521,7 +521,7 @@ def test_le_verrou_porte_la_version_corrigee_seulement_et_la_correction_ne_le_to
 def test_create_app_donne_le_point_osv_local_au_pipeline(tmp_path: Path) -> None:
     """L'application réelle (pas le harnais de test) passe `{osv_url}` aux runners : sans lui,
     pip_audit sortirait en erreur et toute PR resterait bloquée."""
-    from wavedevsecops.web.app import create_app
+    from devsecops_dojo.web.app import create_app
 
     settings = Settings(data_dir=tmp_path)
     app = create_app(port=4242, token="t", settings=settings)

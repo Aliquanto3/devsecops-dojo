@@ -8,11 +8,11 @@ from pathlib import Path
 import pytest
 from test_terminal import WAIT, Space
 
-from wavedevsecops import github_sim, terminal
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import OperationRefused, build_operation, pr_intents
-from wavedevsecops.events import Kind
-from wavedevsecops.gitio import Git, GitError
+from devsecops_dojo import github_sim, terminal
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import OperationRefused, build_operation, pr_intents
+from devsecops_dojo.events import Kind
+from devsecops_dojo.gitio import Git, GitError
 
 
 @pytest.fixture
@@ -157,7 +157,7 @@ def test_un_push_du_terminal_rafraichit_les_pr(space: Space, git_path: Path) -> 
 
 
 def test_intentions_enregistrees_et_corps_invalides() -> None:
-    from wavedevsecops.engine import INTENTS, InvalidIntent
+    from devsecops_dojo.engine import INTENTS, InvalidIntent
 
     pr_intents.register_intents()
     assert {"pr_open", "pr_merge"} <= set(INTENTS)
@@ -256,8 +256,8 @@ def test_course_par_l_intention_annonce_les_pr(
 
 
 def test_create_app_branche_les_pr_une_seule_fois(settings: Settings) -> None:
-    from wavedevsecops.engine import INTENTS
-    from wavedevsecops.web.app import create_app
+    from devsecops_dojo.engine import INTENTS
+    from devsecops_dojo.web.app import create_app
 
     terminal.AFTER_COMMAND_HOOKS.clear()
     try:

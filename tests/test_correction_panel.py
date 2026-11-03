@@ -8,8 +8,8 @@ from __future__ import annotations
 from test_designation import _answer, _commit, _to_first_designation, make_box  # noqa: F401
 from test_steps import WAIT
 
-from wavedevsecops.engine import build_operation, load_run, restart
-from wavedevsecops.events import Kind
+from devsecops_dojo.engine import build_operation, load_run, restart
+from devsecops_dojo.events import Kind
 
 
 def test_la_correction_est_dans_le_panneau_apres_fermeture_et_rechargement(make_box) -> None:  # noqa: F811

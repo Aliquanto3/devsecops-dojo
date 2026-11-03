@@ -44,8 +44,8 @@ def test_seule_la_file_publie_une_explication() -> None:
 @pytest.mark.parametrize(
     "code",
     [
-        "from wavedevsecops.events import StepExplanation\n",
-        "from wavedevsecops import events\nevents.Kind.STEP_EXPLANATION\n",
+        "from devsecops_dojo.events import StepExplanation\n",
+        "from devsecops_dojo import events\nevents.Kind.STEP_EXPLANATION\n",
         "emit('step_explanation', {})\n",
     ],
 )
@@ -79,10 +79,10 @@ def test_seul_config_lit_l_environnement() -> None:
 def test_les_modules_feuilles_existent() -> None:
     modules = {name for name, _ in iter_modules()}
     assert {
-        "wavedevsecops.config",
-        "wavedevsecops.contracts",
-        "wavedevsecops.events",
-        "wavedevsecops.procs",
+        "devsecops_dojo.config",
+        "devsecops_dojo.contracts",
+        "devsecops_dojo.events",
+        "devsecops_dojo.procs",
     } <= modules
 
 

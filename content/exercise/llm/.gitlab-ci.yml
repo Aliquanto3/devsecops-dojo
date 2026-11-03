@@ -1,14 +1,14 @@
 # Pipeline du projet en GitLab CI. Le même pipeline s'écrit dans « .github/workflows/ci.yml »
 # (GitHub Actions) et dans « Jenkinsfile » (Jenkins) : sept tâches, l'une après l'autre
 # (une étape par tâche, car les tâches d'une même étape tournent en parallèle).
-# Les commentaires « wds:job » et « wds:end » encadrent chaque tâche : WaveDevSecOps s'en sert pour
-# surligner ses lignes. Ce fichier se lit, il ne s'exécute pas dans WaveDevSecOps.
+# Les commentaires « dojo:job » et « dojo:end » encadrent chaque tâche : DevSecOps Dojo s'en sert pour
+# surligner ses lignes. Ce fichier se lit, il ne s'exécute pas dans DevSecOps Dojo.
 stages: [ruff, pytest, gitleaks, bandit, pip_audit, uv_lock, quality_gate]
 
 default:
   image: python:3.14
 
-# wds:job ruff
+# dojo:job ruff
 ruff:
   # Lint (ruff)
   stage: ruff
@@ -17,9 +17,9 @@ ruff:
     - uv sync --frozen
   script:
     - uv run ruff check .
-# wds:end
+# dojo:end
 
-# wds:job pytest
+# dojo:job pytest
 pytest:
   # Tests (pytest)
   stage: pytest
@@ -28,9 +28,9 @@ pytest:
     - uv sync --frozen
   script:
     - uv run pytest -q --tb=short
-# wds:end
+# dojo:end
 
-# wds:job gitleaks
+# dojo:job gitleaks
 gitleaks:
   # Secrets (gitleaks)
   stage: gitleaks
@@ -38,9 +38,9 @@ gitleaks:
     # gitleaks doit être installé dans l'image qui exécute la tâche.
     # `--config` et `--ignore-gitleaks-allow` : réglages de gitleaks lus hors de votre dépôt ({config} : dossier de la plateforme), donc ni un .gitleaks.toml ni un « gitleaks:allow » n'écartent un secret.
     - gitleaks dir --no-banner --redact --exit-code 3 --ignore-gitleaks-allow --config '{config}/gitleaks.toml' .
-# wds:end
+# dojo:end
 
-# wds:job bandit
+# dojo:job bandit
 bandit:
   # Analyse de sécurité (bandit)
   stage: bandit
@@ -51,9 +51,9 @@ bandit:
     # Le code de l'application (src/), sans les exemptions « # nosec ».
     # `--ini` : réglages de bandit lus hors de votre dépôt ({config} : dossier de la plateforme), donc un fichier .bandit déposé dans src/ n'écarte aucun test.
     - uv run bandit -r src -q --ignore-nosec --ini '{config}/bandit.ini'
-# wds:end
+# dojo:end
 
-# wds:job pip_audit
+# dojo:job pip_audit
 pip_audit:
   # Dépendances (pip-audit)
   stage: pip_audit
@@ -61,11 +61,11 @@ pip_audit:
     - pip install uv
     - uv sync --frozen
   script:
-    # Dépendances épinglées de requirements.txt, sans résolution ; {osv_url} : adresse du point OSV (dans WaveDevSecOps : le point local, base figée).
+    # Dépendances épinglées de requirements.txt, sans résolution ; {osv_url} : adresse du point OSV (dans DevSecOps Dojo : le point local, base figée).
     - uv run pip-audit --vulnerability-service osv --osv-url '{osv_url}' --no-deps --disable-pip --progress-spinner off -r requirements.txt
-# wds:end
+# dojo:end
 
-# wds:job uv_lock
+# dojo:job uv_lock
 uv_lock:
   # Verrou des dépendances (uv)
   stage: uv_lock
@@ -74,9 +74,9 @@ uv_lock:
   script:
     # Échoue si uv.lock ne correspond plus à pyproject.toml : `uv sync --frozen` ne le voit pas.
     - uv lock --check
-# wds:end
+# dojo:end
 
-# wds:job quality_gate
+# dojo:job quality_gate
 quality_gate:
   # Couverture du nouveau code (quality gate)
   stage: quality_gate
@@ -91,4 +91,4 @@ quality_gate:
     - uv run pytest -o addopts= --cov '--cov-config={config}/coverage.ini' '--cov-report=xml:{reports}/coverage.xml' -q --tb=short
     # Échoue sous 80 % de couverture des lignes modifiées ; {base_sha} : le commit de base de la MR.
     - uv run diff-cover '{reports}/coverage.xml' '--compare-branch={base_sha}' --fail-under=80
-# wds:end
+# dojo:end

@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import procs, toolrun
-from wavedevsecops.config import Settings
-from wavedevsecops.registry import load_registry
+from devsecops_dojo import procs, toolrun
+from devsecops_dojo.config import Settings
+from devsecops_dojo.registry import load_registry
 
 PY = Path(sys.executable)
 
@@ -203,6 +203,8 @@ def test_environnement_hors_ligne_story_7_1(
     assert not any(k.lower() in toolrun.PROXY_NAMES for k in env)
     assert env["no_proxy"] == "127.0.0.1,localhost" and env["UV_PYTHON_DOWNLOADS"] == "never"
     assert Path(env["UV_PYTHON_INSTALL_DIR"]) == tmp_path / "uv-cache" / "python"
+    assert env["DEVSECOPS_DOJO_NETGUARD"] == "1"
+    # Environnements copiés par la migration : leur garde `_wds_netguard` lit l'ancien nom.
     assert env["WDS_NETGUARD"] == "1"
     for name in ("RUFF_CACHE_DIR", "COVERAGE_FILE", "PRE_COMMIT_HOME"):
         assert Path(env[name]).parent == tmp_path / "cache"
@@ -234,7 +236,9 @@ def test_sync_environment_hors_ligne(tmp_path: Path, monkeypatch: pytest.MonkeyP
     assert env["UV_CACHE_DIR"] == str(tmp_path / "data" / "uv-cache")
     site = toolrun.site_packages(venv)
     assert site is not None
-    assert (site / "_wds_netguard.pth").read_text("utf-8").strip() == "import _wds_netguard"
+    assert (site / "_devsecops_dojo_netguard.pth").read_text(
+        "utf-8"
+    ).strip() == "import _devsecops_dojo_netguard"
     # Sans uv utilisable, aucune exception : l'erreur est rendue.
     monkeypatch.setattr(
         toolrun, "resolve", lambda *a, **k: toolrun.ToolStatus("uv", "missing", reason="absent")
@@ -288,10 +292,10 @@ def test_garde_reseau_du_venv(tmp_path: Path) -> None:
     script = tmp_path / "essai.py"
     script.write_text(toolrun.NETGUARD_SOURCE + _CONNECT, encoding="utf-8")
     env = toolrun.probe_environment()
-    env["WDS_NETGUARD"] = "1"
+    env["DEVSECOPS_DOJO_NETGUARD"] = "1"
     result = procs.run([PY, "-I", script], env=env, timeout=30)
     assert result.ok, result.stderr
-    assert "WaveDevSecOps" in result.stdout and "192.0.2.1" in result.stdout
+    assert "DevSecOps Dojo" in result.stdout and "192.0.2.1" in result.stdout
 
 
 _UDP_ET_DNS = """
@@ -312,7 +316,7 @@ def test_garde_reseau_refuse_udp_et_resolution(tmp_path: Path) -> None:
     script = tmp_path / "essai.py"
     script.write_text(toolrun.NETGUARD_SOURCE + _UDP_ET_DNS, encoding="utf-8")
     env = toolrun.probe_environment()
-    env["WDS_NETGUARD"] = "1"
+    env["DEVSECOPS_DOJO_NETGUARD"] = "1"
     result = procs.run([PY, "-I", script], env=env, timeout=30)
     assert result.ok, result.stderr
     assert result.stdout.split() == ["REFUSE", "REFUSE"]
@@ -339,8 +343,11 @@ def test_garde_reseau_refuse_udp_et_resolution(tmp_path: Path) -> None:
 )
 def test_garde_reseau_loopback_strict(event: str, args: tuple, permis: bool) -> None:
     namespace: dict[str, object] = {}
-    exec(toolrun.NETGUARD_SOURCE.replace('os.environ.get("WDS_NETGUARD")', "None"), namespace)
-    hook = namespace["_wds_netguard"]
+    exec(
+        toolrun.NETGUARD_SOURCE.replace('os.environ.get("DEVSECOPS_DOJO_NETGUARD")', "None"),
+        namespace,
+    )
+    hook = namespace["_netguard"]
     if permis:
         hook(event, args)  # type: ignore[operator]
     else:
@@ -382,3 +389,36 @@ def test_uv_hors_du_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     launcher.write_text("", encoding="utf-8")
     monkeypatch.setenv("UV", str(launcher))  # posé par `uv run` au lancement de l'application
     assert toolrun._host_candidate(tool, "linux", 1.0)[0] == launcher
+
+
+def test_venv_venu_de_l_ancien_dossier_traite_comme_absent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Migration : un venv dont `pyvenv.cfg` vise `WaveDevSecOps` est recréé, pas réutilisé."""
+    venv = tmp_path / "DevSecOpsDojo" / "workspaces" / "w" / "cache" / "venv"
+    bin_dir = venv / ("Scripts" if sys.platform == "win32" else "bin")
+    bin_dir.mkdir(parents=True)
+    (bin_dir / ("python.exe" if sys.platform == "win32" else "python")).write_text("", "utf-8")
+    (venv / toolrun.LOCK_MARKER).write_text("abc\n", "utf-8")
+    assert toolrun.venv_python(venv) is not None and toolrun.environment_digest(venv) == "abc"
+    old_home = tmp_path / "WaveDevSecOps" / "uv-cache" / "python" / "cpython-3.14" / "bin"
+    (venv / "pyvenv.cfg").write_text(f"home = {old_home}\nversion_info = 3.14\n", "utf-8")
+    assert toolrun.foreign_venv(venv)
+    assert toolrun.venv_python(venv) is None and toolrun.environment_digest(venv) is None
+    # Dans l'ancien dossier lui-même (ancienne version), le même venv reste le sien.
+    own = tmp_path / "WaveDevSecOps" / "workspaces" / "w" / "cache" / "venv"
+    own.mkdir(parents=True)
+    (own / "pyvenv.cfg").write_text(f"home = {old_home}\n", "utf-8")
+    assert not toolrun.foreign_venv(own)
+    # sync_environment repart d'un dossier vide avant `uv sync`.
+    seen: list[bool] = []
+    uv = toolrun.ToolStatus("uv", "ok", "0.9", Path(sys.executable), "host")
+    monkeypatch.setattr(toolrun, "resolve", lambda *a, **k: uv)
+
+    def fake_spawn(argv, **kwargs):  # noqa: ANN001, ANN202
+        seen.append(venv.exists())
+        raise OSError("arrêt du test")
+
+    monkeypatch.setattr(toolrun.procs, "spawn", fake_spawn)
+    toolrun.sync_environment(tmp_path / "repo", venv, Settings(data_dir=tmp_path / "DevSecOpsDojo"))
+    assert seen == [False]

@@ -25,9 +25,13 @@ REPORT = {
             "label": "Parcours sans IA",
             "rows": [
                 {
-                    "scenario_id": "add-commit", "title": "Add et commit", "mode": "A",
-                    "state_text": "Terminé", "score_text": "1 sur 2 du premier coup",
-                    "hints_text": "1 indice", "resets_text": "2 remises à zéro",
+                    "scenario_id": "add-commit",
+                    "title": "Add et commit",
+                    "mode": "A",
+                    "state_text": "Terminé",
+                    "score_text": "1 sur 2 du premier coup",
+                    "hints_text": "1 indice",
+                    "resets_text": "2 remises à zéro",
                     "completed_text": "19/10/2026 10:30",
                 }
             ],
@@ -101,7 +105,7 @@ def test_export_demande_le_format_et_enregistre(tmp_path: Path) -> None:
         tmp_path,
         """
 const calls = []; const saved = [];
-const fetchImpl = async (url) => { calls.push(url); return { ok: true, status: 200, headers: { get: () => 'attachment; filename="rapport-wavedevsecops.csv"' }, blob: async () => "BLOB" }; };
+const fetchImpl = async (url) => { calls.push(url); return { ok: true, status: 200, headers: { get: () => 'attachment; filename="rapport-devsecops-dojo.csv"' }, blob: async () => "BLOB" }; };
 renderPreview(main, REPORT, { fetchImpl, save: async (blob, name) => { saved.push([blob, name]); return true; } });
 $$(".report-actions button")[1].dispatchEvent(makeEvent("click"));
 await tick(); await tick();
@@ -109,7 +113,7 @@ console.log(JSON.stringify({ calls, saved, notice: $$(".notice-card").length }))
 """,
     )
     assert out["calls"] == ["/api/report/export?format=csv"]
-    assert out["saved"] == [["BLOB", "rapport-wavedevsecops.csv"]]
+    assert out["saved"] == [["BLOB", "rapport-devsecops-dojo.csv"]]
     assert out["notice"] == 0
 
 

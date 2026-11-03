@@ -2,16 +2,16 @@
 status: final
 stepsCompleted: [1, 2, 3, 4]
 inputDocuments:
-  - _bmad-output/planning-artifacts/prds/prd-wavedevsecops-2026-10-18/prd.md
-  - _bmad-output/planning-artifacts/prds/prd-wavedevsecops-2026-10-18/addendum.md
-  - _bmad-output/planning-artifacts/architecture/architecture-wavedevsecops-2026-10-18/ARCHITECTURE-SPINE.md
-  - _bmad-output/planning-artifacts/ux-designs/ux-wavedevsecops-2026-10-18/DESIGN.md
-  - _bmad-output/planning-artifacts/ux-designs/ux-wavedevsecops-2026-10-18/EXPERIENCE.md
-  - _bmad-output/specs/spec-wavedevsecops/scenarios.md
-  - _bmad-output/specs/spec-wavedevsecops/milestones.md
+  - _bmad-output/planning-artifacts/prds/prd-devsecops-dojo-2026-10-18/prd.md
+  - _bmad-output/planning-artifacts/prds/prd-devsecops-dojo-2026-10-18/addendum.md
+  - _bmad-output/planning-artifacts/architecture/architecture-devsecops-dojo-2026-10-18/ARCHITECTURE-SPINE.md
+  - _bmad-output/planning-artifacts/ux-designs/ux-devsecops-dojo-2026-10-18/DESIGN.md
+  - _bmad-output/planning-artifacts/ux-designs/ux-devsecops-dojo-2026-10-18/EXPERIENCE.md
+  - _bmad-output/specs/spec-devsecops-dojo/scenarios.md
+  - _bmad-output/specs/spec-devsecops-dojo/milestones.md
 ---
 
-# WaveDevSecOps - Découpage en epics
+# DevSecOps Dojo - Découpage en epics
 
 ## Vue d'ensemble
 
@@ -79,7 +79,7 @@ NFR-13 : chaque élément affiché porte une explication courte en français, ac
 **Amorce du projet (pas de starter externe)** : la Story 1.1 crée le dépôt selon le Structural Seed du spine :
 - `pyproject.toml` (uv, version SemVer, groupes `chain` et `dev`, extra `window`) ;
 - `.gitattributes` `* text=auto eol=lf` ;
-- `src/wavedevsecops/` avec les modules feuilles `config` (`Settings` unique), `contracts`, `events` ;
+- `src/devsecops_dojo/` avec les modules feuilles `config` (`Settings` unique), `contracts`, `events` ;
 - `procs`, `content/` et `tests/` ;
 - la CI GitHub Actions sur `windows-latest`, `macos-latest` et `ubuntu-latest`.
 
@@ -94,7 +94,7 @@ Stack exacte : table Stack du spine (Python 3.14 géré par uv, FastAPI 0.144.0,
 - AR-7 (AD-6) : instantanés par copie et empreinte canonique sha256. L'instantané 0 est pris à la fin du setup, puis un instantané avant chaque quiz. La restauration est atomique et journalisée dans `run.json`, avec trois essais sous Windows et `restore_failed` comme repli. Recommencer restaure l'instantané 0, sinon reconstruit l'espace.
 - AR-8 (AD-7) : scénarios YAML validés par pydantic. Un registre d'ops de setup et un registre de types d'étape (`check(state, ctx) -> Verdict`) ; des alias `@`. Un `step_id` stable ; trois indices ; un ensemble de bonnes réponses. `content/explanations.yaml`. Les gabarits d'exercice par parcours vivent dans `content/exercise/`. Un lint de contenu tourne en CI.
 - AR-9 (AD-8) : `github.json` n'a qu'un écrivain, `github_sim`. Le modèle de PR est complet dès v0.1. Les checks sont liés à `head_sha`/`base_sha` et remis à `queued` quand le SHA change. Le merge passe par `merge-tree --write-tree`/`commit-tree`/`update-ref`. Un vrai hook `pre-receive` protège la branche. Les réactions du collègue sont déclarées par le scénario.
-- AR-10 (AD-9) : hooks `#!/bin/sh` d'une ligne, générés par `install_hooks`, vers `python -m wavedevsecops.hooks`. Un seul `hooks/` par espace, désigné par `core.hooksPath`. pre-commit tourne en `repo: local` / `language: system`.
+- AR-10 (AD-9) : hooks `#!/bin/sh` d'une ligne, générés par `install_hooks`, vers `python -m devsecops_dojo.hooks`. Un seul `hooks/` par espace, désigné par `core.hooksPath`. pre-commit tourne en `repo: local` / `language: system`.
 - AR-11 (AD-10) : `content/pipeline.yaml` est la seule description du pipeline. Un run par `(pr, head_sha, base_sha)` et `epoch`, cloné dans `ci/`. La sortie humaine est affichée verbatim ; les constats viennent d'une exécution machine (json). La quality gate combine `pytest --cov` et `diff-cover --fail-under=80`. Les balises `wds:job`/`wds:end` délimitent les trois écritures.
 - AR-12 (AD-11) : pip-audit est le vrai outil, pointé sur `osv`, un point local `POST /osv/v1/query` servi depuis `content/osv/` (extrait daté). Trois exécutions : humaine, json, cyclonedx.
 - AR-13 (AD-12) : `procs.spawn`/`terminate_tree` (Job Object sous Windows). `toolrun` résout chaque outil par le registre et lance avec un env hors ligne (`UV_OFFLINE`, `PIP_NO_INDEX`, `NO_PROXY`…). Le `uv-cache` est préchargé ; les environnements viennent de `uv sync --offline --frozen`.
@@ -113,7 +113,7 @@ Stack exacte : table Stack du spine (Python 3.14 géré par uv, FastAPI 0.144.0,
 
 UX-DR1 : jetons de couleur clairs et sombres de DESIGN.md, sous forme de propriétés CSS. Ils comprennent les ajouts `terminal-*` et `focus-on-ink`. Le `theme-picker` propose Système (par défaut), Clair et Sombre, dans le menu « Affichage ▾ ».
 UX-DR2 : typographie Fredoka, Atkinson Hyperlegible et JetBrains Mono, servie en WOFF2 local. La rampe a 10 rôles ; aucun texte sous 12 px.
-UX-DR3 : espacements, arrondis (sm/md/lg/full), relief plein sans flou (4, 1 et 6 px), fond à pois derrière les vues seulement, et jetons propres à WaveDevSecOps (`scenario-panel-width` 440 px, `chain-band-height`, `graph-row-height`, `diff-line-height`…).
+UX-DR3 : espacements, arrondis (sm/md/lg/full), relief plein sans flou (4, 1 et 6 px), fond à pois derrière les vues seulement, et jetons propres à DevSecOps Dojo (`scenario-panel-width` 440 px, `chain-band-height`, `graph-row-height`, `diff-line-height`…).
 UX-DR4 : `site-nav`. Liens selon les jalons, page courante soulignée, `diagnostic-badge`, `path-menu`, « Volets ▾ » (`pane-menu`) et « Affichage ▾ » (thème, « Réduire les animations »).
 UX-DR5 : disposition principale à 1920×1080. Panneau Scénario de 440 px ; rangée haute à 40 % (Dépôt local 55 %, Distant + PR 45 %) ; Code à 33 % ; Terminal à 27 %. Chaque vue a un `pane-step` numéroté, un sous-titre fixé et un défilement interne avec en-tête fixe. Les vues sont déclarées dans un registre des volets.
 UX-DR6 : masquage et redimensionnement. « — » transforme une vue en puce « + Nom » ; ⛶ l'agrandit (Échap pour revenir) ; la poignée se déplace au clavier par pas de 16 px (double-clic pour les proportions par défaut) ; le menu Volets propose Élargir et Réduire. Une vue au moins reste visible, d'au moins 240×160 px. La configuration est mémorisée dans le navigateur. Le panneau Scénario ne se masque pas.
@@ -145,7 +145,7 @@ UX-DR31 : `report-preview` (contenu, phrase de confidentialité, « Exporter en 
 UX-DR32 : `chain-band`, avec quatre « Station n · Nom », la station courante et « Vous êtes ici » (`aria-current="step"`), la frontière « CI | CD » et « Carte ▾ ». `chain-map` se pose par-dessus les vues, qui deviennent `inert`. Ses nœuds d'outil et de barrière sont liés aux checks, aux hooks et aux termes ; « Bientôt » marque un jalon non livré.
 UX-DR33 : page Vocabulaire et `glossary-term` (souligné en pointillés). « Voir la barrière » sélectionne la barrière, ou déplie la carte avec « La voir jouer : scénario <nom> ». DAST porte « Nommé seulement ».
 UX-DR34 : Livraison. Onglet « Livraison » dans Distant + PR ; `build-artifact` ; `env-card` Staging et Prod simulée ; `promotion-gate` ; Rollback en `button-danger` avec confirmation en ligne ; refus d'un tag non SemVer par `terminal-refused`.
-UX-DR35 : états vides et transitoires. Textes des vues vides ; « Préparation du bac à sable… » sans spinner muet ; bandeau « WaveDevSecOps ne répond plus… » avec actions inactives ; outil disparu pendant un scénario signalé, le reste continuant.
+UX-DR35 : états vides et transitoires. Textes des vues vides ; « Préparation du bac à sable… » sans spinner muet ; bandeau « DevSecOps Dojo ne répond plus… » avec actions inactives ; outil disparu pendant un scénario signalé, le reste continuant.
 UX-DR36 : clavier. Tab suit l'ordre de lecture et saute les vues masquées. Chaque vue est un seul arrêt, avec focus itinérant par flèches. F6 passe d'une zone à l'autre. Échap ferme dans l'ordre fixé. Sont bannis : modales bloquantes, information au seul survol, auto-défilement qui reprend la main, troncature sans accès au texte entier, exécution d'une commande par clic.
 UX-DR37 : annonces. Une seule région `role="status"` suit l'ordre de FR-4. `role="alert"` sert au refus, au hook, à l'échec de restauration et à l'application arrêtée. Les chronomètres ne sont jamais dans une région live.
 UX-DR38 : à 400 % de zoom (320 px CSS), le panneau, le catalogue et les annexes passent sur une colonne. `prefers-reduced-motion` et « Réduire les animations » coupent les transitions.
@@ -386,7 +386,7 @@ afin que chaque story suivante soit vérifiée sur les trois systèmes et sous l
 **Quand** on inspecte son arborescence
 **Alors** on y trouve :
 - `.gitattributes` (`* text=auto eol=lf`) ;
-- `src/wavedevsecops/` avec `config.py` : un objet `Settings` pydantic unique, et aucune lecture directe de l'environnement ailleurs ;
+- `src/devsecops_dojo/` avec `config.py` : un objet `Settings` pydantic unique, et aucune lecture directe de l'environnement ailleurs ;
 - `contracts/` et `events/`, des feuilles sans import du projet ;
 - `content/` et `tests/`.
 
@@ -396,7 +396,7 @@ afin que chaque story suivante soit vérifiée sur les trois systèmes et sous l
 **Quand** GitHub Actions s'exécute
 **Alors** `ruff` et `pytest` tournent sur `windows-latest`, `macos-latest` et `ubuntu-latest`
 **Et** le contrôle (1) d'AD-13 refuse dans `src/` tout import de `socket`, `http.client`, `urllib.request`, `httpx`, `requests`, `aiohttp` ou `ssl`, hors `llmrun` et hors l'écoute de `web` et `cli`
-**Et** le contrôle (2) refuse toute URL `http(s)://` non loopback dans `src/wavedevsecops/web/static/`
+**Et** le contrôle (2) refuse toute URL `http(s)://` non loopback dans `src/devsecops_dojo/web/static/`
 **Et** le contrôle (3) fait tourner les tests sous un hook d'audit `socket.connect`, qui échoue sur toute adresse non loopback
 
 **Étant donné** la table Stack du spine et `uv.lock`
@@ -416,7 +416,7 @@ afin de travailler sans configurer de serveur, sans invite du pare-feu et sans e
 **Critères d'acceptation :**
 
 **Étant donné** l'application installée
-**Quand** l'apprenant lance `uv run wavedevsecops`
+**Quand** l'apprenant lance `uv run devsecops-dojo`
 **Alors** uvicorn écoute sur `127.0.0.1`, sur un port libre choisi au lancement, et le navigateur s'ouvre sur `http://127.0.0.1:<port>/?t=<jeton>`
 **Et** le serveur échange le jeton contre un cookie `HttpOnly` et `SameSite=Strict`, puis redirige sans le jeton
 
@@ -431,7 +431,7 @@ afin de travailler sans configurer de serveur, sans invite du pare-feu et sans e
 
 **Étant donné** un premier lancement
 **Quand** l'application démarre
-**Alors** elle crée `<data>/` sous `platformdirs.user_data_dir("WaveDevSecOps", appauthor=False, roaming=False)`
+**Alors** elle crée `<data>/` sous `platformdirs.user_data_dir("DevSecOps Dojo", appauthor=False, roaming=False)`
 **Et** elle crée `progress.json`, écrit par `progress` seul, avec `schema_version`, l'horodatage d'installation lu dans `install.json` s'il existe, et celui du premier lancement
 **Et** un fichier de données d'une version future n'est pas modifié et donne une erreur claire en français
 
@@ -441,11 +441,11 @@ afin de travailler sans configurer de serveur, sans invite du pare-feu et sans e
 **Et** `--window` ouvre la même interface dans pywebview lorsque l'extra `window` est installé
 **Et** les journaux vont dans `<data>/logs/app.log`, en rotation, sans contenu de fichier de l'apprenant
 
-### Story 1.3 : Afficher la coquille d'interface avec l'identité WaveStack
+### Story 1.3 : Afficher la coquille d'interface avec l'identité HarnessLab
 
 En tant qu'apprenant,
 je veux une interface lisible, en clair ou en sombre, avec un en-tête qui me mène aux surfaces livrées,
-afin de retrouver l'identité de WaveStack et de travailler confortablement, même hors ligne.
+afin de retrouver l'identité de HarnessLab et de travailler confortablement, même hors ligne.
 
 **Type :** dev
 
@@ -470,7 +470,7 @@ afin de retrouver l'identité de WaveStack et de travailler confortablement, mê
 
 **Étant donné** la page ouverte
 **Quand** le serveur local ne répond plus (le point de vie `GET /api/health`, interrogé à intervalle régulier, échoue ; le flux SSE de la Story 2.2 s'y ajoutera)
-**Alors** un bandeau `role="alert"` dit « WaveDevSecOps ne répond plus. Relancez-le ; votre progression est enregistrée. » et les actions deviennent inactives
+**Alors** un bandeau `role="alert"` dit « DevSecOps Dojo ne répond plus. Relancez-le ; votre progression est enregistrée. » et les actions deviennent inactives
 
 **Étant donné** les quatre variantes de bouton
 **Quand** un bouton est inactif
@@ -1147,7 +1147,7 @@ afin de voir une vraie protection et pas une interdiction de l'application.
 
 **Étant donné** l'op `install_hooks`
 **Quand** le setup la joue
-**Alors** chaque hook est un script `#!/bin/sh` d'une ligne en LF, `exec "<python de l'app>" -m wavedevsecops.hooks <nom> "$@"`, avec des chemins posix entre guillemets
+**Alors** chaque hook est un script `#!/bin/sh` d'une ligne en LF, `exec "<python de l'app>" -m devsecops_dojo.hooks <nom> "$@"`, avec des chemins posix entre guillemets
 **Et** aucun hook n'utilise bash, et aucun n'est copié depuis le dépôt de l'application
 
 **Étant donné** `main` protégée par le scénario de test

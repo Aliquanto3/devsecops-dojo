@@ -19,11 +19,11 @@ from test_projections import FREE, Sandbox
 from test_shell_js import NODE, _run
 from test_shell_ui import CONTRAST_PAIRS, _blocks, _palette, _ratio
 
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import prepare_workspace
-from wavedevsecops.gitio import Git
-from wavedevsecops.projections import build_views
-from wavedevsecops.scenarios import load_scenario
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import prepare_workspace
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.projections import build_views
+from devsecops_dojo.scenarios import load_scenario
 
 pytestmark = pytest.mark.skipif(NODE is None, reason="Node absent : comportement JS non exécuté")
 
@@ -426,7 +426,7 @@ REPO_PAIRS = (
     ("ink", "discipline-context-soft", 4.5),  # graph-remote-ref
     ("ink", "surface", 4.5),  # graph-tag
     ("on-ink", "ink-fill", 4.5),  # graph-head, new-mark
-    ("ink", "accent-soft", 4.5),  # staging-index, groupe Indexé
+    ("ink", "success-soft", 4.5),  # staging-index, groupe Indexé
     ("ink", "primary-soft", 4.5),  # élément sélectionné
     ("ink", "surface-raised", 4.5),  # sélection, badge Collègue, groupes
     ("ink-soft", "surface-raised", 4.5),  # libellé « perdu · visible par reflog »

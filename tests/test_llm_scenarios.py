@@ -4,7 +4,8 @@ données au cloud (test du gabarit dans le check pytest) et injection de prompt 
 revue humaine.
 
 Les tests lents lancent les vrais outils de l'environnement de développement sur l'arbre préparé
-par chaque scénario ; gitleaks seulement s'il est posé dans `WDS_EXERCISE_DATA` (la CI le fournit).
+par chaque scénario ; gitleaks seulement s'il est posé dans `DEVSECOPS_DOJO_EXERCISE_DATA`
+(la CI le fournit).
 Aucun appel réseau : la config cloud n'est jamais appelée (AD-13).
 """
 
@@ -19,16 +20,16 @@ import pytest
 import yaml
 from test_quality_gate import _commit, _run, real_tools  # noqa: F401  (fixture)
 
-from wavedevsecops import ci
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts import RepoState
-from wavedevsecops.engine import prepare_workspace
-from wavedevsecops.projections import EXPLAIN_REFS
-from wavedevsecops.scenarios import load_scenario
-from wavedevsecops.scenarios.order import STATION_ORDER
-from wavedevsecops.scenarios.steps import pr_state, repo_state
-from wavedevsecops.scenarios.steps._base import StepContext
-from wavedevsecops.web.explanations import load_explanations
+from devsecops_dojo import ci
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts import RepoState
+from devsecops_dojo.engine import prepare_workspace
+from devsecops_dojo.projections import EXPLAIN_REFS
+from devsecops_dojo.scenarios import load_scenario
+from devsecops_dojo.scenarios.order import STATION_ORDER
+from devsecops_dojo.scenarios.steps import pr_state, repo_state
+from devsecops_dojo.scenarios.steps._base import StepContext
+from devsecops_dojo.web.explanations import load_explanations
 
 SETTINGS = Settings()
 CLE = SETTINGS.scenarios_path() / "cle-api-en-dur.A.yaml"
@@ -134,10 +135,10 @@ def test_la_revue_humaine_nomme_l_injection_de_prompt() -> None:
 
 # ------------------------------------------------------------------ étapes de PR
 def _checks_layout(tmp_path: Path, states: dict[str, str], findings: dict[str, list[str]]):
-    from wavedevsecops import github_sim
-    from wavedevsecops.contracts.github import Check, GithubState, PullRequest
-    from wavedevsecops.contracts.github import Finding as GhFinding
-    from wavedevsecops.wsfs import Layout
+    from devsecops_dojo import github_sim
+    from devsecops_dojo.contracts.github import Check, GithubState, PullRequest
+    from devsecops_dojo.contracts.github import Finding as GhFinding
+    from devsecops_dojo.wsfs import Layout
 
     layout = Layout(tmp_path / "ws")
     layout.root.mkdir(parents=True)
@@ -377,7 +378,7 @@ def _rules(result: ci.JobResult) -> list[str]:
 
 def _gitleaks_or_skip(real_tools: list[str]) -> None:
     if "gitleaks" in real_tools:
-        pytest.skip("gitleaks n'est pas posé sur ce poste (WDS_EXERCISE_DATA)")
+        pytest.skip("gitleaks n'est pas posé sur ce poste (DEVSECOPS_DOJO_EXERCISE_DATA)")
 
 
 @pytest.mark.slow

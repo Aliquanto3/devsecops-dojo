@@ -9,16 +9,16 @@ from pathlib import Path
 import pytest
 import yaml
 
-from wavedevsecops import gitio
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import (
+from devsecops_dojo import gitio
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import (
     WorkspaceError,
     canonical_records,
     fingerprint,
     prepare_workspace,
 )
-from wavedevsecops.gitio import Git, hermetic_environment
-from wavedevsecops.scenarios import (
+from devsecops_dojo.gitio import Git, hermetic_environment
+from devsecops_dojo.scenarios import (
     LoadedScenario,
     Scenario,
     SetupError,

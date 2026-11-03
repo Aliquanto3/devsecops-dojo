@@ -7,21 +7,21 @@ from pathlib import Path
 import pytest
 from test_github_sim import BASE, _commit_and_push
 
-from wavedevsecops import github_sim
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts import parse_element_id
-from wavedevsecops.contracts.remote import RemoteView
-from wavedevsecops.engine import prepare_workspace
-from wavedevsecops.gitio import Git
-from wavedevsecops.projections import project
-from wavedevsecops.projections.remote import (
+from devsecops_dojo import github_sim
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts import parse_element_id
+from devsecops_dojo.contracts.remote import RemoteView
+from devsecops_dojo.engine import prepare_workspace
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.projections import project
+from devsecops_dojo.projections.remote import (
     _duration_text,
     announce_remote,
     branch_element,
     build_remote,
     previous_remote,
 )
-from wavedevsecops.scenarios import LoadedScenario, parse_scenario
+from devsecops_dojo.scenarios import LoadedScenario, parse_scenario
 
 PR_SETUP = """\
   - op: set_protection
@@ -219,7 +219,7 @@ def test_literal_redeclares_identiques_a_contracts_github() -> None:
     """Revue : `contracts.remote` redéclare les états de `contracts.github` (cycle d'import)."""
     from typing import get_args
 
-    from wavedevsecops.contracts import github, remote
+    from devsecops_dojo.contracts import github, remote
 
     for name in ("CheckState", "PrState", "ReviewState", "BlockKind"):
         assert get_args(getattr(remote, name)) == get_args(getattr(github, name)), name
@@ -228,7 +228,7 @@ def test_literal_redeclares_identiques_a_contracts_github() -> None:
 @pytest.mark.slow
 def test_marques_designable_de_la_vue_distante(settings: Settings, git_path: Path) -> None:
     """Revue (contrat 5.2) : une désignation marque aussi branches, PR, checks et revues."""
-    from wavedevsecops.engine.designation import mark_views
+    from devsecops_dojo.engine.designation import mark_views
 
     layout, git = _prepare(settings, git_path, PR_SETUP)
     views = project(git, layout).views.model_dump(mode="json")

@@ -10,12 +10,12 @@ from pathlib import Path
 import pytest
 from test_github_sim import BASE
 
-from wavedevsecops import github_sim, hooks
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import prepare_workspace
-from wavedevsecops.gitio import Git
-from wavedevsecops.scenarios import LoadedScenario, parse_scenario
-from wavedevsecops.scenarios.loader import ScenarioError
+from devsecops_dojo import github_sim, hooks
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import prepare_workspace
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.scenarios import LoadedScenario, parse_scenario
+from devsecops_dojo.scenarios.loader import ScenarioError
 
 HOOKS = """\
   - op: install_hooks
@@ -56,7 +56,7 @@ def test_le_script_du_hook_tient_en_une_ligne_sh_en_lf(settings: Settings, git_p
     shebang, command = raw.decode("utf-8").splitlines()
     assert shebang == "#!/bin/sh"
     assert command == (
-        f'exec "{Path(sys.executable).as_posix()}" -m wavedevsecops.hooks pre-receive "$@"'
+        f'exec "{Path(sys.executable).as_posix()}" -m devsecops_dojo.hooks pre-receive "$@"'
     )
     assert "bash" not in raw.decode("utf-8")
     assert "\\" not in command
@@ -151,15 +151,30 @@ def test_le_chemin_de_python_est_echappe_pour_sh(tmp_path: Path) -> None:
     """Revue 3.5 : `$`, accent grave et guillemet du chemin restent littéraux pour sh."""
     script = hooks.hook_script("pre-receive", Path('/opt/a$b`c"d/python'))
     assert script.splitlines()[1] == (
-        r'exec "/opt/a\$b\`c\"d/python" -m wavedevsecops.hooks pre-receive "$@"'
+        r'exec "/opt/a\$b\`c\"d/python" -m devsecops_dojo.hooks pre-receive "$@"'
     )
+
+
+def test_hook_pose_avant_le_renommage_reconnu_puis_reecrit(tmp_path: Path) -> None:
+    """Espace copié depuis l'ancien dossier de données : hooks `-m wavedevsecops.hooks`."""
+    from devsecops_dojo.wsfs import write_executable
+
+    hooks_dir = tmp_path / "hooks"
+    hooks_dir.mkdir()
+    legacy = '#!/bin/sh\nexec "/ancien/python" -m wavedevsecops.hooks pre-commit "$@"\n'
+    write_executable(hooks_dir, "pre-commit", legacy)
+    assert hooks.pre_commit_installed(hooks_dir)  # `--no-verify` reste refusé
+    fresh = hooks.hook_script("pre-commit", Path("/neuf/python"))
+    assert hooks.canonical_script(legacy.encode()) == hooks.canonical_script(fresh.encode())
+    assert hooks.refresh(hooks_dir) == ["pre-commit"]
+    assert b"-m devsecops_dojo.hooks pre-commit" in (hooks_dir / "pre-commit").read_bytes()
 
 
 @pytest.mark.slow
 def test_l_empreinte_ne_depend_pas_du_chemin_de_python(settings: Settings, git_path: Path) -> None:
     """Revue 3.5 : la référence d'AD-18 d'un scénario avec hooks vaut sur tout poste."""
-    from wavedevsecops.engine.fingerprint import fingerprint
-    from wavedevsecops.wsfs import write_executable
+    from devsecops_dojo.engine.fingerprint import fingerprint
+    from devsecops_dojo.wsfs import write_executable
 
     layout, git = _prepare(settings, git_path)
     before = fingerprint(layout, git)

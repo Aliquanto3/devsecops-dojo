@@ -12,12 +12,12 @@ import pytest
 from test_scenario_panel_dom import PRELUDE
 from test_shell_js import NODE, _run
 
-from wavedevsecops.config import Settings
-from wavedevsecops.engine.steps import StepRunner
-from wavedevsecops.scenarios import ScenarioError, load_scenario, parse_scenario, scenario_files
-from wavedevsecops.web import blockers as blockers_module
-from wavedevsecops.web.blockers import blockers_body, catalogue_scenario_titles, chain_barriers
-from wavedevsecops.web.catalogue import load_chain_texts
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine.steps import StepRunner
+from devsecops_dojo.scenarios import ScenarioError, load_scenario, parse_scenario, scenario_files
+from devsecops_dojo.web import blockers as blockers_module
+from devsecops_dojo.web.blockers import blockers_body, catalogue_scenario_titles, chain_barriers
+from devsecops_dojo.web.catalogue import load_chain_texts
 
 BASE = """
 schema_version: 1

@@ -4,7 +4,8 @@ refusé (AD-4, AD-9, AD-10, AD-14).
 Le hook d'un espace est un processus à part que git lance : les tests sans outils réels posent un
 faux hook (il porte le marqueur du vrai pour être reconnu) ; le vrai `pre-commit run` et le vrai
 gitleaks tournent dans `test_vrai_hook_pre_commit` quand l'environnement d'exercice et gitleaks
-sont disponibles (`WDS_EXERCISE_UV=1`, `WDS_EXERCISE_DATA`, `tools/gitleaks/` provisionné).
+sont disponibles (`DEVSECOPS_DOJO_EXERCISE_UV=1`, `DEVSECOPS_DOJO_EXERCISE_DATA`,
+`tools/gitleaks/` provisionné).
 """
 
 from __future__ import annotations
@@ -18,13 +19,13 @@ from pathlib import Path
 import pytest
 from test_terminal_tools import PYTHON, WAIT, Box, no_sync  # noqa: F401 - no_sync : fixture
 
-from wavedevsecops import hooks, toolrun
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts import element_id
-from wavedevsecops.events import Kind
-from wavedevsecops.terminal.allowlist import get_allowlist
-from wavedevsecops.terminal.parse import Refused, parse_line
-from wavedevsecops.toolrun import findings as machine
+from devsecops_dojo import hooks, toolrun
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts import element_id
+from devsecops_dojo.events import Kind
+from devsecops_dojo.terminal.allowlist import get_allowlist
+from devsecops_dojo.terminal.parse import Refused, parse_line
+from devsecops_dojo.toolrun import findings as machine
 
 SCENARIO = Path(__file__).resolve().parent.parent / "content" / "scenarios"
 SECRET = SCENARIO / "secret-dans-un-commit.A.yaml"
@@ -55,7 +56,7 @@ def _fake_hook(layout, tmp_path: Path, *, exit_code: int, refusal: dict | None) 
     script.write_text("\n".join(body) + "\n", encoding="utf-8")
     hook = layout.hooks / "pre-commit"
     hook.write_text(
-        "#!/bin/sh\n# faux hook, comme : -m wavedevsecops.hooks pre-commit\n"
+        "#!/bin/sh\n# faux hook, comme : -m devsecops_dojo.hooks pre-commit\n"
         f'exec "{Path(PYTHON).as_posix()}" "{script.as_posix()}"\n',
         encoding="utf-8",
         newline="\n",
@@ -87,7 +88,7 @@ def test_le_scenario_pose_un_hook_pre_commit_d_une_ligne_sh_en_lf(box: Box) -> N
     raw = (box.layout.hooks / "pre-commit").read_bytes()
     assert raw == hooks.hook_script("pre-commit", Path(sys.executable)).encode("utf-8")
     assert b"\r" not in raw and raw.endswith(b"\n")
-    assert raw.decode("utf-8").splitlines()[1].endswith('-m wavedevsecops.hooks pre-commit "$@"')
+    assert raw.decode("utf-8").splitlines()[1].endswith('-m devsecops_dojo.hooks pre-commit "$@"')
     assert not (box.layout.hooks / "pre-receive").exists()  # seul le hook demandé est posé
     assert hooks.pre_commit_installed(box.layout.hooks)
     # Le chemin de Python n'entre pas dans l'empreinte (AD-6) et `refresh` le réécrit.
@@ -106,7 +107,7 @@ def test_la_configuration_du_scenario_ne_lance_que_gitleaks(box: Box) -> None:
 
 
 def terminal_tools(space: Box) -> set[str]:
-    from wavedevsecops import terminal
+    from devsecops_dojo import terminal
 
     return set(terminal.declared_tools(space.engine))
 
@@ -316,7 +317,7 @@ def test_machine_gitleaks_code_3_est_un_secret_et_1_une_panne(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Même convention que le pipeline (7.4) : `--exit-code 3` ; autre code non nul = panne."""
-    from wavedevsecops import procs
+    from devsecops_dojo import procs
 
     argv_seen: list[list[str]] = []
 
@@ -356,17 +357,18 @@ def test_machine_gitleaks_code_3_est_un_secret_et_1_une_panne(
 
 
 # ------------------------------------------------------------------ vrais outils
-EXERCISE_DATA = os.environ.get("WDS_EXERCISE_DATA", "")
+EXERCISE_DATA = os.environ.get("DEVSECOPS_DOJO_EXERCISE_DATA", "")
 GITLEAKS = Path(EXERCISE_DATA) / "tools" / "gitleaks" if EXERCISE_DATA else None
 REAL = (
-    os.environ.get("WDS_EXERCISE_UV") == "1"
+    os.environ.get("DEVSECOPS_DOJO_EXERCISE_UV") == "1"
     and GITLEAKS is not None
     and any((GITLEAKS / name).is_file() for name in ("gitleaks", "gitleaks.exe"))
 )
 
 
 @pytest.mark.skipif(
-    not REAL, reason="WDS_EXERCISE_UV=1 et gitleaks provisionné dans WDS_EXERCISE_DATA"
+    not REAL,
+    reason="DEVSECOPS_DOJO_EXERCISE_UV=1 et gitleaks provisionné dans DEVSECOPS_DOJO_EXERCISE_DATA",
 )
 @pytest.mark.parametrize("track", ["no_ai", "llm"])
 def test_vrai_hook_pre_commit(git_path: Path, track: str) -> None:
@@ -402,3 +404,26 @@ def test_vrai_hook_pre_commit(git_path: Path, track: str) -> None:
         assert len(_commits_ahead(space)) == 1
     finally:
         space.manager.close()
+
+
+def test_espace_migre_sans_venv_recree_avant_le_commit_garde(
+    box: Box, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Migration : les venvs ne sont pas copiés ; le commit gardé recrée l'environnement
+    (pre-commit) avant de lancer git, au lieu de laisser le hook refuser faute d'outil."""
+    from devsecops_dojo.terminal import tools
+
+    asked: list[str] = []
+
+    def prepare(ctx, tool_id, allow):  # noqa: ANN001, ANN202
+        asked.append(tool_id)
+        return False  # recréation impossible : git n'est pas lancé
+
+    monkeypatch.setattr(tools, "prepare_environment", prepare)
+    _fake_hook(box.layout, tmp_path, exit_code=0, refusal=None)
+    assert box.run(f"git add {FILE}")[1] == 0
+    _op, code, _events = box.run("git commit -m x")
+    assert asked == ["pre-commit"] and code == tools.EXIT_UNAVAILABLE
+    assert _commits_ahead(box) == []
+    asked.clear()
+    assert box.run("git status")[1] == 0 and asked == []  # seules les commandes gardées

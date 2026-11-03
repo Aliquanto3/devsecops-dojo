@@ -14,12 +14,12 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops.config import Settings
-from wavedevsecops.engine.manager import WorkspaceManager
-from wavedevsecops.engine.operations import OpContext, Operation, Projection
-from wavedevsecops.engine.watcher import TreeWatcher
-from wavedevsecops.events import Kind
-from wavedevsecops.wsfs import Layout
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine.manager import WorkspaceManager
+from devsecops_dojo.engine.operations import OpContext, Operation, Projection
+from devsecops_dojo.engine.watcher import TreeWatcher
+from devsecops_dojo.events import Kind
+from devsecops_dojo.wsfs import Layout
 
 WAIT = 20.0
 ID = "llm.s1.A"
@@ -105,7 +105,7 @@ def _start(manager: WorkspaceManager, settings: Settings) -> tuple[Layout, Spy, 
     layout = Layout.for_scenario(settings.workspaces_path(), "llm", "s1", "A")
     (layout.repo / ".git").mkdir(parents=True)
     (layout.repo / "a.txt").write_text("v0", encoding="utf-8")
-    from wavedevsecops.engine.runfile import save_run
+    from devsecops_dojo.engine.runfile import save_run
 
     save_run(layout, {"epoch": 0})
     engine = manager.get(ID)

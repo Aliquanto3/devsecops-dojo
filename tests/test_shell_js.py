@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-JS = Path(__file__).resolve().parents[1] / "src" / "wavedevsecops" / "web" / "static" / "js"
+JS = Path(__file__).resolve().parents[1] / "src" / "devsecops_dojo" / "web" / "static" / "js"
 NODE = shutil.which("node")
 
 pytestmark = pytest.mark.skipif(NODE is None, reason="Node absent : comportement JS non exécuté")

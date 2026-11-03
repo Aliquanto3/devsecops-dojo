@@ -7,7 +7,7 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from wavedevsecops.events import (
+from devsecops_dojo.events import (
     DIAGNOSTIC_CHECK,
     PAYLOADS,
     SEQUENCE_KINDS,
@@ -17,7 +17,7 @@ from wavedevsecops.events import (
     TerminalOutput,
     validate_payload,
 )
-from wavedevsecops.events.journal import RESYNC_BOOT_TEXT, RESYNC_GAP_TEXT
+from devsecops_dojo.events.journal import RESYNC_BOOT_TEXT, RESYNC_GAP_TEXT
 
 AD17_KINDS = {
     "engine_state",

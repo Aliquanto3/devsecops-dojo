@@ -12,27 +12,27 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts import Commit, RepoState, element_id
-from wavedevsecops.engine import (
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts import Commit, RepoState, element_id
+from devsecops_dojo.engine import (
     OpContext,
     Operation,
     WorkspaceEngine,
     WorkspaceManager,
     load_run,
 )
-from wavedevsecops.events import Envelope, Kind
-from wavedevsecops.gitio import Git
-from wavedevsecops.projections import EXPLAIN_REFS
-from wavedevsecops.scenarios import (
+from devsecops_dojo.events import Envelope, Kind
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.projections import EXPLAIN_REFS
+from devsecops_dojo.scenarios import (
     STEP_TYPES,
     ScenarioError,
     load_scenario,
     parse_scenario,
     scenario_files,
 )
-from wavedevsecops.scenarios.steps import StepContext, StepType
-from wavedevsecops.scenarios.steps.repo_state import MISSING_FORESEEN_TEXT, Args, check
+from devsecops_dojo.scenarios.steps import StepContext, StepType
+from devsecops_dojo.scenarios.steps.repo_state import MISSING_FORESEEN_TEXT, Args, check
 
 WAIT = 60.0
 ROOT = Path(__file__).resolve().parent.parent
@@ -183,9 +183,9 @@ def test_registre_des_types_d_etape() -> None:
 def test_le_moteur_ne_connait_aucun_type_d_etape() -> None:
     """Ajouter un type de test ne modifie ni le moteur ni le chargeur (AD-7)."""
     for folder in ("engine", "events"):
-        for path in (ROOT / "src" / "wavedevsecops" / folder).glob("*.py"):
+        for path in (ROOT / "src" / "devsecops_dojo" / folder).glob("*.py"):
             assert "repo_state" not in path.read_text(encoding="utf-8"), path.name
-    loader = ROOT / "src" / "wavedevsecops" / "scenarios" / "loader.py"
+    loader = ROOT / "src" / "devsecops_dojo" / "scenarios" / "loader.py"
     assert "repo_state" not in loader.read_text(encoding="utf-8")
 
 
@@ -737,7 +737,7 @@ def test_type_absent_d_une_etape_nomme_le_champ_type() -> None:
     errors = _lint_errors(text)
     # Plusieurs types (repo_state, quiz) : `union_tag_not_found` nomme le champ `type`.
     assert errors == {"steps[0]": "champ `type` absent"}
-    from wavedevsecops.scenarios.loader import french_message
+    from devsecops_dojo.scenarios.loader import french_message
 
     assert french_message({"type": "union_tag_not_found", "loc": ("steps", 0)}) == (
         "champ `type` absent"

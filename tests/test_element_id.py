@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from wavedevsecops.contracts import ELEMENT_FORMS, ELEMENT_KINDS, element_id, parse_element_id
+from devsecops_dojo.contracts import ELEMENT_FORMS, ELEMENT_KINDS, element_id, parse_element_id
 
 SHA = "0123456789abcdef0123456789abcdef01234567"
 ODD = "a:b%c d/é✓ 𝄞"

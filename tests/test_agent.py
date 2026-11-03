@@ -7,11 +7,11 @@ from pathlib import Path
 import pytest
 from test_github_sim import BASE
 
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import prepare_workspace
-from wavedevsecops.gitio import Git
-from wavedevsecops.projections import ACTORS, project, read_repo_state
-from wavedevsecops.scenarios import LoadedScenario, parse_scenario
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import prepare_workspace
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.projections import ACTORS, project, read_repo_state
+from devsecops_dojo.scenarios import LoadedScenario, parse_scenario
 
 AGENT_COMMIT = """\
   - op: agent_commit
@@ -146,8 +146,8 @@ def test_push_force_reecrit_origin_sans_toucher_au_local(
 def test_push_force_sans_force_refuse_une_branche_qui_n_est_pas_le_parent(
     settings: Settings, git_path: Path
 ) -> None:
-    from wavedevsecops.scenarios.context import SetupContext, SetupError
-    from wavedevsecops.scenarios.ops._origin import commit_on_origin
+    from devsecops_dojo.scenarios.context import SetupContext, SetupError
+    from devsecops_dojo.scenarios.ops._origin import commit_on_origin
 
     prepared, git = _prepare(settings, git_path, AGENT_COMMIT + "  - op: push\n    branch: main\n")
     ctx = SetupContext(layout=prepared.layout, git=git)

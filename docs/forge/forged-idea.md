@@ -1,6 +1,6 @@
-# Idée forgée : WaveDevSecOps (ex-git-commands-training)
+# Idée forgée : DevSecOps Dojo (ex-git-commands-training)
 
-Appli locale pour apprendre git/GitHub puis la chaîne CI/CD et DevSecOps, pédagogie WaveStack. Public : Anaël, puis collègues en vibe coding (autonomie, puis ateliers), puis clients. Open source, topic `ai-portfolio`.
+Appli locale pour apprendre git/GitHub puis la chaîne CI/CD et DevSecOps, pédagogie HarnessLab. Public : Anaël, puis collègues en vibe coding (autonomie, puis ateliers), puis clients. Open source, topic `ai-portfolio`.
 
 ## Produit et jalons
 - Un seul produit, une seule spec. Présentation officielle à `v1.0.0`.
@@ -62,5 +62,5 @@ Mode formateur pour les ateliers (réinitialiser, sauter une étape, notes d'ani
 - Snapshot et restauration fiables du bac à sable.
 - pip-audit en hors ligne : instantané de la base de vulnérabilités embarqué, ou résultat simulé.
 - Comment le pipeline simulé exécute les outils et affiche les checks.
-- Nom, licence, stack (reprendre celle de WaveStack ?).
+- Nom, licence, stack (reprendre celle de HarnessLab ?).
 - Couche de connexion LLM (exécution facultative du code d'exercice).

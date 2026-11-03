@@ -21,7 +21,7 @@ def test_manifeste() -> None:
 
 
 def test_arborescence() -> None:
-    src = ROOT / "src" / "wavedevsecops"
+    src = ROOT / "src" / "devsecops_dojo"
     for path in (
         src / "config.py",
         src / "contracts" / "__init__.py",
@@ -35,6 +35,6 @@ def test_arborescence() -> None:
 
 
 def test_version_du_paquet_installe() -> None:
-    import wavedevsecops
+    import devsecops_dojo
 
-    assert wavedevsecops.__version__ == "0.2.0"
+    assert devsecops_dojo.__version__ == "0.2.0"

@@ -74,7 +74,10 @@ console.log(JSON.stringify({ mode: $(".workspace").dataset.mode, panes, rows, ha
     assert out["mode"] == "full"
     assert [p["id"] for p in out["panes"]] == ["repo", "remote", "code", "terminal"]
     assert [p["step"] for p in out["panes"]] == ["1", "2", "3", "4"]
-    assert out["panes"][0]["subtitle"] == "Graphe des commits et index, comme git log --all et git status"
+    assert (
+        out["panes"][0]["subtitle"]
+        == "Graphe des commits et index, comme git log --all et git status"
+    )
     assert out["panes"][1]["empty"] == "Aucune PR."
     # Seuls le graphe, le diff et le terminal défilent dans les deux sens.
     assert [p["scroll"] for p in out["panes"]] == ["both", "y", "both", "both"]
@@ -165,7 +168,9 @@ console.log(JSON.stringify(r));
     assert out["menuOpen"] is True
     assert out["afterFirst"] == {"menuOpen": False, "shown": ["code"], "focus": "pane-menu-trigger"}
     assert out["afterSecond"]["mode"] == "full" and len(out["afterSecond"]["shown"]) == 4
-    assert out["afterSecond"]["focus"] == "Agrandir Code" and out["afterSecond"]["pressed"] == "false"
+    assert (
+        out["afterSecond"]["focus"] == "Agrandir Code" and out["afterSecond"]["pressed"] == "false"
+    )
     assert out["terminal"] == {"focus": "pane-terminal-title", "shown": 4}
     assert out["savedMax"] is False
 

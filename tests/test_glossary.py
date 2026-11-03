@@ -13,9 +13,9 @@ from test_catalogue import call, cookie, instance  # noqa: F401  (fixtures)
 from test_shell_js import NODE, _run
 from test_workspace_dom import MINIDOM
 
-from wavedevsecops.config import Settings
-from wavedevsecops.web.explanations import load_explanations
-from wavedevsecops.web.glossary import glossary_body, load_glossary
+from devsecops_dojo.config import Settings
+from devsecops_dojo.web.explanations import load_explanations
+from devsecops_dojo.web.glossary import glossary_body, load_glossary
 
 CONTENT = Path(__file__).resolve().parent.parent / "content"
 TERMS = [
@@ -68,7 +68,7 @@ def test_les_termes_cites_dans_les_explications_existent() -> None:
 
 
 def test_chaque_scenario_du_vocabulaire_existe_au_catalogue() -> None:
-    from wavedevsecops.web.catalogue import load_catalogue
+    from devsecops_dojo.web.catalogue import load_catalogue
 
     glossary = load_glossary(Settings(content_dir=CONTENT))
     assert glossary is not None
@@ -113,8 +113,10 @@ def test_fichier_absent_ou_invalide_donne_un_vocabulaire_vide(tmp_path: Path) ->
 
 
 def test_un_terme_nomme_seulement_ne_mene_a_rien(tmp_path: Path) -> None:
-    text = (CONTENT / "glossary.yaml").read_text("utf-8").replace(
-        "    named_only: true", "    named_only: true\n    barrier_id: lint"
+    text = (
+        (CONTENT / "glossary.yaml")
+        .read_text("utf-8")
+        .replace("    named_only: true", "    named_only: true\n    barrier_id: lint")
     )
     (tmp_path / "glossary.yaml").write_text(text, "utf-8")
     assert load_glossary(Settings(content_dir=tmp_path)) is None
@@ -125,7 +127,9 @@ def test_get_glossary_sert_le_vocabulaire(instance, cookie) -> None:  # noqa: F8
     assert status == 200 and [t["id"] for t in body["terms"]] == TERMS
 
 
-pytestmark_node = pytest.mark.skipif(NODE is None, reason="Node absent : comportement JS non exécuté")
+pytestmark_node = pytest.mark.skipif(
+    NODE is None, reason="Node absent : comportement JS non exécuté"
+)
 
 GLOSSARY = {
     "ui": {
@@ -144,8 +148,18 @@ GLOSSARY = {
             "definition_text": "Définition.",
             "named_only": False,
             "trace_text": "",
-            "barrier": {"id": "secret-scan", "label": "Pas de secret", "station": 1, "station_text": "Station 1 · Poste local", "delivered": True},
-            "scenario": {"id": "s1", "title_text": "Un secret", "play_text": "La voir jouer : scénario Un secret"},
+            "barrier": {
+                "id": "secret-scan",
+                "label": "Pas de secret",
+                "station": 1,
+                "station_text": "Station 1 · Poste local",
+                "delivered": True,
+            },
+            "scenario": {
+                "id": "s1",
+                "title_text": "Un secret",
+                "play_text": "La voir jouer : scénario Un secret",
+            },
         },
         {
             "id": "sast",
@@ -153,11 +167,33 @@ GLOSSARY = {
             "definition_text": "Définition SAST.",
             "named_only": False,
             "trace_text": "",
-            "barrier": {"id": "static-analysis", "label": "Analyse statique", "station": 3, "station_text": "Station 3 · Sécurité", "delivered": True},
+            "barrier": {
+                "id": "static-analysis",
+                "label": "Analyse statique",
+                "station": 3,
+                "station_text": "Station 3 · Sécurité",
+                "delivered": True,
+            },
             "scenario": None,
         },
-        {"id": "traceability", "term_text": "Traçabilité", "definition_text": "D.", "named_only": False, "trace_text": "Dans les PR et les checks.", "barrier": None, "scenario": None},
-        {"id": "dast", "term_text": "DAST", "definition_text": "D.", "named_only": True, "trace_text": "", "barrier": None, "scenario": None},
+        {
+            "id": "traceability",
+            "term_text": "Traçabilité",
+            "definition_text": "D.",
+            "named_only": False,
+            "trace_text": "Dans les PR et les checks.",
+            "barrier": None,
+            "scenario": None,
+        },
+        {
+            "id": "dast",
+            "term_text": "DAST",
+            "definition_text": "D.",
+            "named_only": True,
+            "trace_text": "",
+            "barrier": None,
+            "scenario": None,
+        },
     ],
 }
 
@@ -199,12 +235,33 @@ const soon = $('[data-term="sast"] .glossary-barrier-play').textContent;
 console.log(JSON.stringify({ entries, before, played, closed, soon, controlsExist: Boolean(document.getElementById(before.controls)) }));
 """,
     )
-    assert [e["term"] for e in out["entries"]] == ["secrets-scanning", "sast", "traceability", "dast"]
-    assert out["entries"][0]["see"] == "Voir la barrière" and out["entries"][1]["see"] == "Voir la barrière"
+    assert [e["term"] for e in out["entries"]] == [
+        "secrets-scanning",
+        "sast",
+        "traceability",
+        "dast",
+    ]
+    assert (
+        out["entries"][0]["see"] == "Voir la barrière"
+        and out["entries"][1]["see"] == "Voir la barrière"
+    )
     # DAST : « Nommé seulement », aucune barrière ; traçabilité : renvoi aux PR et aux checks, sans bouton.
-    assert out["entries"][3] == {"term": "dast", "name": "DAST Nommé seulement", "see": None, "tag": "Nommé seulement", "trace": None}
-    assert out["entries"][2]["see"] is None and out["entries"][2]["trace"] == "Dans les PR et les checks."
-    assert out["before"] == {"expanded": "false", "controls": "glossary-barrier-secrets-scanning", "detail": 0}
+    assert out["entries"][3] == {
+        "term": "dast",
+        "name": "DAST Nommé seulement",
+        "see": None,
+        "tag": "Nommé seulement",
+        "trace": None,
+    }
+    assert (
+        out["entries"][2]["see"] is None
+        and out["entries"][2]["trace"] == "Dans les PR et les checks."
+    )
+    assert out["before"] == {
+        "expanded": "false",
+        "controls": "glossary-barrier-secrets-scanning",
+        "detail": 0,
+    }
     assert out["controlsExist"] is True
     assert out["played"] == {
         "expanded": "true",
@@ -277,5 +334,16 @@ const closed = draw({ link: null, none_text: "Ouvrez un scénario de station pou
 console.log(JSON.stringify({ open, closed }));
 """,
     )
-    assert out["open"] == {"link": {"href": "/espace/sans-ia.x.A", "text": "Voir les PR et les checks de votre espace"}, "none": None, "dead": 0}
-    assert out["closed"] == {"link": None, "none": "Ouvrez un scénario de station pour voir des PR et des checks.", "dead": 0}
+    assert out["open"] == {
+        "link": {
+            "href": "/espace/sans-ia.x.A",
+            "text": "Voir les PR et les checks de votre espace",
+        },
+        "none": None,
+        "dead": 0,
+    }
+    assert out["closed"] == {
+        "link": None,
+        "none": "Ouvrez un scénario de station pour voir des PR et des checks.",
+        "dead": 0,
+    }

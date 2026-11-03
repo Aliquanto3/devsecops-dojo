@@ -11,13 +11,13 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts import RepoState, Views, element_id, parse_element_id
-from wavedevsecops.engine import OpContext, Operation, WorkspaceEngine, prepare_workspace
-from wavedevsecops.engine.manager import repo_projector
-from wavedevsecops.events import Envelope, EventLog, Kind
-from wavedevsecops.gitio import Git
-from wavedevsecops.projections import (
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts import RepoState, Views, element_id, parse_element_id
+from devsecops_dojo.engine import OpContext, Operation, WorkspaceEngine, prepare_workspace
+from devsecops_dojo.engine.manager import repo_projector
+from devsecops_dojo.events import Envelope, EventLog, Kind
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.projections import (
     ACTORS,
     Linker,
     build_views,
@@ -26,8 +26,8 @@ from wavedevsecops.projections import (
     project,
     read_repo_state,
 )
-from wavedevsecops.scenarios import load_scenario
-from wavedevsecops.wsfs import Layout
+from devsecops_dojo.scenarios import load_scenario
+from devsecops_dojo.wsfs import Layout
 
 FREE = Path(__file__).resolve().parent.parent / "content" / "scenarios" / "bac-a-sable-libre.A.yaml"
 WAIT = 30.0

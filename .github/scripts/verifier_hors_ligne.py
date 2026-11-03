@@ -1,6 +1,7 @@
 """CI, story 7.1 : après une installation réelle, la chaîne fonctionne réseau coupé.
 
-Lancé avec le Python de l'application installée (`<data>/app/.venv`), `WDS_DATA_DIR` posé.
+Lancé avec le Python de l'application installée (`<data>/app/.venv`),
+`DEVSECOPS_DOJO_DATA_DIR` posé.
 Copie le gabarit sans IA dans un espace jetable, crée `cache/venv/` par `uv sync --offline
 --frozen` depuis le `uv-cache` préchargé, puis résout et lance les outils par le registre.
 Sous Linux, la CI le lance dans un espace de noms sans réseau (`unshare -n`).
@@ -13,9 +14,9 @@ import sys
 import tempfile
 from pathlib import Path
 
-from wavedevsecops import toolrun
-from wavedevsecops.config import Settings, project_root
-from wavedevsecops.diagnostic import run_diagnostic
+from devsecops_dojo import toolrun
+from devsecops_dojo.config import Settings, project_root
+from devsecops_dojo.diagnostic import run_diagnostic
 
 CHAIN = ("ruff", "pytest", "pytest-cov", "coverage", "diff-cover", "bandit", "pip-audit")
 

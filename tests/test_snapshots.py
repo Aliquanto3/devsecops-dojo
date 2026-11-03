@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import wsfs
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import (
+from devsecops_dojo import wsfs
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import (
     OpContext,
     Operation,
     PreparedWorkspace,
@@ -31,10 +31,10 @@ from wavedevsecops.engine import (
     take_snapshot,
     workspace_id_for,
 )
-from wavedevsecops.events import Envelope, Kind
-from wavedevsecops.gitio import Git
-from wavedevsecops.scenarios import load_scenario
-from wavedevsecops.wsfs import SNAPSHOT_ENTRIES, Layout
+from devsecops_dojo.events import Envelope, Kind
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.scenarios import load_scenario
+from devsecops_dojo.wsfs import SNAPSHOT_ENTRIES, Layout
 
 FREE = Path(__file__).resolve().parent.parent / "content" / "scenarios" / "bac-a-sable-libre.A.yaml"
 WAIT = 60.0
@@ -359,7 +359,7 @@ def test_exception_inattendue_donne_restore_failed(
 ) -> None:
     """Revue : une exception hors `RestoreFailed` (ici à la vérification) donne aussi
     `restore_failed`, et `restoring` reste pour que le démarrage suivant reprenne la copie."""
-    from wavedevsecops.engine import snapshots
+    from devsecops_dojo.engine import snapshots
 
     def broken(*_args, **_kwargs):
         raise RuntimeError("git introuvable")

@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts import AppError
-from wavedevsecops.engine import (
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts import AppError
+from devsecops_dojo.engine import (
     OpContext,
     Operation,
     OperationRefused,
@@ -21,10 +21,10 @@ from wavedevsecops.engine import (
     load_run,
     save_run,
 )
-from wavedevsecops.engine.manager import external_change
-from wavedevsecops.engine.operations import GENERIC_ACTION, GENERIC_CAUSE
-from wavedevsecops.events import Envelope, EventLog, Kind, StepExplanation, StepVerdict
-from wavedevsecops.wsfs import Layout
+from devsecops_dojo.engine.manager import external_change
+from devsecops_dojo.engine.operations import GENERIC_ACTION, GENERIC_CAUSE
+from devsecops_dojo.events import Envelope, EventLog, Kind, StepExplanation, StepVerdict
+from devsecops_dojo.wsfs import Layout
 
 WAIT = 20.0
 

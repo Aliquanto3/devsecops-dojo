@@ -15,10 +15,10 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
-from wavedevsecops import cli
-from wavedevsecops.config import Settings
-from wavedevsecops.progress import FutureSchemaError, ensure_progress
-from wavedevsecops.web import SESSION_COOKIE
+from devsecops_dojo import cli
+from devsecops_dojo.config import Settings
+from devsecops_dojo.progress import FutureSchemaError, ensure_progress
+from devsecops_dojo.web import SESSION_COOKIE
 
 
 @pytest.fixture
@@ -68,7 +68,7 @@ def test_jeton_echange_contre_cookie_puis_redirection(instance: cli.Instance) ->
     assert "HttpOnly" in cookie and "SameSite=strict" in cookie
     assert instance.token not in cookie
     page = request(instance, "GET", "/diagnostic", {"Cookie": cookie.split(";")[0]})
-    assert page.status == 200 and "WaveDevSecOps" in page.read().decode()
+    assert page.status == 200 and "DevSecOps Dojo" in page.read().decode()
     assert_no_cors(page)
 
 
@@ -180,7 +180,7 @@ def test_version_future_non_modifiee_et_message_clair(
 
 def test_dossier_par_defaut_platformdirs() -> None:
     path = Settings().resolved_data_dir()
-    assert path.name == "WaveDevSecOps"
+    assert path.name == "DevSecOpsDojo"
 
 
 def test_console_et_journal(instance: cli.Instance, capsys: pytest.CaptureFixture[str]) -> None:
@@ -189,7 +189,7 @@ def test_console_et_journal(instance: cli.Instance, capsys: pytest.CaptureFixtur
     assert f"http://127.0.0.1:{instance.port}/" in out
     assert instance.token not in out
     assert "NO_PROXY" in out and "--window" in out
-    logging.getLogger("wavedevsecops").info("essai")
+    logging.getLogger("devsecops_dojo").info("essai")
     log = (instance.data_dir / "logs" / "app.log").read_text("utf-8")
     assert "essai" in log
     assert instance.token not in log
@@ -230,12 +230,12 @@ def test_window_sans_extra_replie_sur_le_navigateur(
 def test_lancement_concurrent_perdant_n_ecrit_rien(instance: cli.Instance) -> None:
     """Le perdant d'une course au verrou s'arrête avant le journal et `progress.json`."""
     before = {p: p.stat().st_mtime_ns for p in instance.data_dir.rglob("*") if p.is_file()}
-    handlers = list(logging.getLogger("wavedevsecops").handlers)
+    handlers = list(logging.getLogger("devsecops_dojo").handlers)
     with pytest.raises(FileExistsError):
         cli.start_instance(Settings(data_dir=instance.data_dir))
     after = {p: p.stat().st_mtime_ns for p in instance.data_dir.rglob("*") if p.is_file()}
     assert after == before
-    assert logging.getLogger("wavedevsecops").handlers == handlers
+    assert logging.getLogger("devsecops_dojo").handlers == handlers
 
 
 def test_verrou_perime_neuf_d_un_concurrent_rendu(
@@ -269,7 +269,7 @@ def test_erreur_systeme_message_clair_sans_trace(
     code = cli.main([], settings=Settings(data_dir=data), opener=lambda _u: None)
     err = capsys.readouterr().err
     assert code == 1
-    assert "dossier de données" in err and "WDS_DATA_DIR" in err
+    assert "dossier de données" in err and "DEVSECOPS_DOJO_DATA_DIR" in err
     assert "Traceback" not in err
     assert not (data / cli.LOCK_NAME).exists()
 
@@ -296,7 +296,7 @@ def test_methodes_non_sures_controlent_l_origine(instance: cli.Instance) -> None
 
 
 def test_wds_data_dir_vide_vaut_dossier_par_defaut() -> None:
-    assert Settings.from_env({"WDS_DATA_DIR": ""}).data_dir is None
+    assert Settings.from_env({"DEVSECOPS_DOJO_DATA_DIR": ""}).data_dir is None
 
 
 class _Settings(dict):

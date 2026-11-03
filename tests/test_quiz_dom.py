@@ -126,7 +126,9 @@ console.log(JSON.stringify({ altered, restoring, done, posts, later: text(".scen
     assert out["altered"]["text"].startswith("État modifié par le quiz — git reset --hard HEAD~1")
     assert "J'ai compris, rétablir l'état" in out["altered"]["text"]
     assert out["altered"]["focus"] is True
-    assert out["altered"]["explanation"].endswith("`reset --hard` a effacé le commit.".replace("`", ""))
+    assert out["altered"]["explanation"].endswith(
+        "`reset --hard` a effacé le commit.".replace("`", "")
+    )
     assert out["altered"]["status"].startswith("État modifié par le quiz — git reset --hard")
     assert out["altered"]["runReason"] == ["Rétablissez d'abord l'état."]
     assert out["altered"]["inert"] is False

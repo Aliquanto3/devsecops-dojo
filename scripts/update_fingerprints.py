@@ -8,7 +8,7 @@ ces empreintes à celles obtenues sous Windows, macOS et Linux.
 
 from __future__ import annotations
 
-from wavedevsecops.engine import compute_references, load_references, write_references
+from devsecops_dojo.engine import compute_references, load_references, write_references
 
 
 def main() -> int:

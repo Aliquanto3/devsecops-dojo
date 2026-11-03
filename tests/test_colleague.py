@@ -7,14 +7,14 @@ from pathlib import Path
 import pytest
 from test_github_sim import BASE
 
-from wavedevsecops import github_sim
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts.github import Review
-from wavedevsecops.engine import prepare_workspace
-from wavedevsecops.gitio import Git
-from wavedevsecops.projections import ACTORS, project
-from wavedevsecops.scenarios import LoadedScenario, parse_scenario
-from wavedevsecops.scenarios.loader import ScenarioError
+from devsecops_dojo import github_sim
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts.github import Review
+from devsecops_dojo.engine import prepare_workspace
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.projections import ACTORS, project
+from devsecops_dojo.scenarios import LoadedScenario, parse_scenario
+from devsecops_dojo.scenarios.loader import ScenarioError
 
 COLLEAGUE_COMMIT = """\
   - op: colleague_commit

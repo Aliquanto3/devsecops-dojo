@@ -10,11 +10,11 @@ from pathlib import Path
 import yaml
 from test_catalogue import WAIT_S, call, cookie, instance  # noqa: F401  (fixtures)
 
-from wavedevsecops.config import Settings
-from wavedevsecops.projections import EXPLAIN_REFS
-from wavedevsecops.projections.views import PIPELINE_JOB_IDS, pipeline_explain_ref
-from wavedevsecops.web.explanations import load_explanations
-from wavedevsecops.web.glossary import _trace, glossary_body, load_glossary, open_station_workspace
+from devsecops_dojo.config import Settings
+from devsecops_dojo.projections import EXPLAIN_REFS
+from devsecops_dojo.projections.views import PIPELINE_JOB_IDS, pipeline_explain_ref
+from devsecops_dojo.web.explanations import load_explanations
+from devsecops_dojo.web.glossary import _trace, glossary_body, load_glossary, open_station_workspace
 
 CONTENT = Path(__file__).resolve().parent.parent / "content"
 
@@ -73,7 +73,9 @@ def _trace_of(instance, cookie) -> dict:  # noqa: F811
 
 
 def _open(instance, cookie, scenario_id: str) -> str:  # noqa: F811
-    status, opened = call(instance, "POST", "/api/open", cookie, {"scenario_id": scenario_id, "mode": "A"})
+    status, opened = call(
+        instance, "POST", "/api/open", cookie, {"scenario_id": scenario_id, "mode": "A"}
+    )
     assert status in (200, 202), opened
     workspace_id = opened["workspace_id"]
     deadline = time.monotonic() + WAIT_S
@@ -101,5 +103,7 @@ def test_get_glossary_progress_illisible_ou_parcours_invalide_sans_erreur(instan
     progress.write_text("{pas du json", "utf-8")
     assert _trace_of(instance, cookie)["link"] is None
     last = {"track": "inconnu", "scenario_id": "check-en-echec", "mode": "A"}
-    progress.write_text(json.dumps({"schema_version": 1, "facts": [], "last_opened": last}), "utf-8")
+    progress.write_text(
+        json.dumps({"schema_version": 1, "facts": [], "last_opened": last}), "utf-8"
+    )
     assert _trace_of(instance, cookie)["link"] is None

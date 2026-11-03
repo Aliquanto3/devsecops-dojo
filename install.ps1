@@ -1,28 +1,28 @@
-﻿# Installeur de WaveDevSecOps pour Windows 10 et 11, sans droits administrateur (AD-15, AD-20).
+﻿# Installeur de DevSecOps Dojo pour Windows 10 et 11, sans droits administrateur (AD-15, AD-20).
 #
 # Commande unique (voir le README) :
-#   [Net.ServicePointManager]::SecurityProtocol = 'Tls12'; $w = New-Object Net.WebClient; if ($env:HTTPS_PROXY) { $w.Proxy = New-Object Net.WebProxy($env:HTTPS_PROXY, $true); $w.Proxy.UseDefaultCredentials = $true }; iex ([Text.Encoding]::UTF8.GetString($w.DownloadData('https://raw.githubusercontent.com/Aliquanto3/wavedevsecops/main/install.ps1')).TrimStart([char]0xFEFF))
+#   [Net.ServicePointManager]::SecurityProtocol = 'Tls12'; $w = New-Object Net.WebClient; if ($env:HTTPS_PROXY) { $w.Proxy = New-Object Net.WebProxy($env:HTTPS_PROXY, $true); $w.Proxy.UseDefaultCredentials = $true }; iex ([Text.Encoding]::UTF8.GetString($w.DownloadData('https://raw.githubusercontent.com/Aliquanto3/devsecops-dojo/main/install.ps1')).TrimStart([char]0xFEFF))
 #
 # Compatible Windows PowerShell 5.1. Aucune élévation : tout est écrit dans le profil de
 # l'utilisateur. Relancé, il met l'application à jour et conserve progress.json.
 #
 # Réglages (variables d'environnement, toutes facultatives) :
-#   WDS_DATA_DIR        dossier des données (par défaut %LOCALAPPDATA%\WaveDevSecOps, comme l'application)
-#   WDS_INSTALL_METHOD  clone (défaut) ou zip
-#   WDS_INSTALL_REF     branche ou étiquette à installer (défaut main)
+#   DEVSECOPS_DOJO_DATA_DIR        dossier des données (par défaut %LOCALAPPDATA%\DevSecOpsDojo, comme l'application)
+#   DEVSECOPS_DOJO_INSTALL_METHOD  clone (défaut) ou zip
+#   DEVSECOPS_DOJO_INSTALL_REF     branche ou étiquette à installer (défaut main)
 #   HTTPS_PROXY         proxy d'entreprise ; pose aussi UV_SYSTEM_CERTS=true
 # Réglages de test (aucun accès réseau, aucune installation réelle) :
-#   WDS_INSTALL_SIMULATE=1, WDS_INSTALL_SIMULATE_GIT=<version|none>, WDS_INSTALL_SIMULATE_UV=<version|none>,
-#   WDS_INSTALL_SIMULATE_FAIL=<étapes séparées par des virgules : download, portablegit, clone, sync, preload, checksum>,
-#   WDS_INSTALL_LIBONLY=1 (définit les fonctions sans rien lancer).
+#   DEVSECOPS_DOJO_INSTALL_SIMULATE=1, DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT=<version|none>, DEVSECOPS_DOJO_INSTALL_SIMULATE_UV=<version|none>,
+#   DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL=<étapes séparées par des virgules : download, portablegit, clone, sync, preload, checksum>,
+#   DEVSECOPS_DOJO_INSTALL_LIBONLY=1 (définit les fonctions sans rien lancer).
 
 $script:SavedErrorActionPreference = $ErrorActionPreference
 $ErrorActionPreference = 'Stop'
 $script:InstallerVersion = 1
-$script:RepoUrl = 'https://github.com/Aliquanto3/wavedevsecops.git'
-$script:ZipUrlBase = 'https://github.com/Aliquanto3/wavedevsecops/archive'
-$script:RawUrlBase = 'https://raw.githubusercontent.com/Aliquanto3/wavedevsecops'
-$script:Simulate = ($env:WDS_INSTALL_SIMULATE -eq '1')
+$script:RepoUrl = 'https://github.com/Aliquanto3/devsecops-dojo.git'
+$script:ZipUrlBase = 'https://github.com/Aliquanto3/devsecops-dojo/archive'
+$script:RawUrlBase = 'https://raw.githubusercontent.com/Aliquanto3/devsecops-dojo'
+$script:Simulate = ($env:DEVSECOPS_DOJO_INSTALL_SIMULATE -eq '1')
 $script:CurrentStep = ''
 $script:Proxy = $null
 $script:SimLog = $null
@@ -67,17 +67,54 @@ $script:NetworkSettings = @(
     'NO_PROXY=127.0.0.1,localhost',
     'UV_SYSTEM_CERTS=true (certificats de l''entreprise)'
 )
-$script:RouteText = ('par clone (WDS_INSTALL_METHOD=clone, il faut git) ou par zip ' +
-    '($env:WDS_INSTALL_METHOD = ''zip''), sans git. ' +
+$script:RouteText = ('par clone (DEVSECOPS_DOJO_INSTALL_METHOD=clone, il faut git) ou par zip ' +
+    '($env:DEVSECOPS_DOJO_INSTALL_METHOD = ''zip''), sans git. ' +
     'À défaut, téléchargez le zip de l''application depuis GitHub, dézippez-le dans le dossier « app » du dossier de données, puis lancez « uv sync » dedans.')
 
 # --- Fonctions pures (testées) ------------------------------------------------------------
 
+# Compatibilité (ancien nom du projet) : les variables WDS_* restent lues quand la variable
+# DEVSECOPS_DOJO_* correspondante est absente, avec un avertissement.
+foreach ($n in 'DATA_DIR', 'INSTALL_METHOD', 'INSTALL_REF') {
+    $oldValue = [Environment]::GetEnvironmentVariable("WDS_$n")
+    if ($oldValue -and -not [Environment]::GetEnvironmentVariable("DEVSECOPS_DOJO_$n")) {
+        [Console]::Error.WriteLine("Avertissement : la variable WDS_$n est dépréciée, utilisez DEVSECOPS_DOJO_$n.")
+        [Environment]::SetEnvironmentVariable("DEVSECOPS_DOJO_$n", $oldValue)
+    }
+}
+
 function Get-DataDir {
-    if ($env:WDS_DATA_DIR -and $env:WDS_DATA_DIR.Trim()) { return $env:WDS_DATA_DIR.Trim() }
+    if ($env:DEVSECOPS_DOJO_DATA_DIR -and $env:DEVSECOPS_DOJO_DATA_DIR.Trim()) { return $env:DEVSECOPS_DOJO_DATA_DIR.Trim() }
     $local = $env:LOCALAPPDATA
     if (-not $local) { $local = Join-Path $env:USERPROFILE 'AppData\Local' }
-    return (Join-Path $local 'WaveDevSecOps')
+    return (Join-Path $local 'DevSecOpsDojo')
+}
+
+# Copie l'ancien dossier de données (« WaveDevSecOps ») vers le nouveau s'il n'existe pas encore,
+# sans le sous-dossier app\ (réinstallé), ni le verrou app.lock, ni les environnements Python. Jamais bloquant, l'ancien dossier n'est pas modifié.
+function Copy-LegacyDataDir([string]$DataDir) {
+    if ($env:DEVSECOPS_DOJO_DATA_DIR -and $env:DEVSECOPS_DOJO_DATA_DIR.Trim()) { return }
+    $old = Join-Path (Split-Path -Parent $DataDir) 'WaveDevSecOps'
+    if (-not (Test-Path -LiteralPath $old -PathType Container) -or (Test-Path -LiteralPath $DataDir)) { return }
+    $stage = "$DataDir.migration-$PID"
+    try {
+        New-Item -ItemType Directory -Path $stage -Force | Out-Null
+        Get-ChildItem -LiteralPath $old -Force | Where-Object { $_.Name -notin 'app', 'app.lock' } |
+            Copy-Item -Destination $stage -Recurse -Force -ErrorAction Stop
+        # Environnements Python copiés (dossiers à pyvenv.cfg) : chemins absolus vers l'ancien
+        # dossier ; l'application les recrée hors ligne au premier usage.
+        $venvs = @(Get-ChildItem -LiteralPath $stage -Recurse -Force -File -Filter 'pyvenv.cfg')
+        foreach ($cfg in $venvs) {
+            if (Test-Path -LiteralPath $cfg.DirectoryName) {
+                Remove-Item -LiteralPath $cfg.DirectoryName -Recurse -Force -ErrorAction Stop
+            }
+        }
+        Move-Item -LiteralPath $stage -Destination $DataDir -ErrorAction Stop
+        Write-Info "Données de l'ancienne version copiées depuis $old."
+    } catch {
+        Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue
+        [Console]::Error.WriteLine("Avertissement : les données de l'ancienne version ($old) n'ont pas pu être copiées ; l'ancien dossier n'est pas modifié.")
+    }
 }
 
 function ConvertTo-VersionParts([string]$Text) {
@@ -192,8 +229,8 @@ function Read-PreviousInstall([string]$DataDir) {
 # --- Réseau, simulation -------------------------------------------------------------------
 
 function Test-SimulatedFailure([string]$Step) {
-    if (-not $script:Simulate -or -not $env:WDS_INSTALL_SIMULATE_FAIL) { return $false }
-    return (@($env:WDS_INSTALL_SIMULATE_FAIL.Split(',') | ForEach-Object { $_.Trim() }) -contains $Step)
+    if (-not $script:Simulate -or -not $env:DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL) { return $false }
+    return (@($env:DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL.Split(',') | ForEach-Object { $_.Trim() }) -contains $Step)
 }
 
 function Add-SimLog([string]$Text) {
@@ -224,8 +261,8 @@ function Save-File([string]$Url, [string]$Destination) {
         if (Test-SimulatedFailure 'download') {
             throw (New-InstallError "Le téléchargement de $Url a échoué (simulation)." $script:NetworkSettings $script:RouteText)
         }
-        if ($Url.EndsWith('/tools.toml') -and $env:WDS_INSTALL_SIMULATE_TOOLS_TOML) {
-            Copy-Item -LiteralPath $env:WDS_INSTALL_SIMULATE_TOOLS_TOML -Destination $Destination -Force
+        if ($Url.EndsWith('/tools.toml') -and $env:DEVSECOPS_DOJO_INSTALL_SIMULATE_TOOLS_TOML) {
+            Copy-Item -LiteralPath $env:DEVSECOPS_DOJO_INSTALL_SIMULATE_TOOLS_TOML -Destination $Destination -Force
         }
         else { [IO.File]::WriteAllText($Destination, 'simulation') }
         return
@@ -275,7 +312,7 @@ function Get-HostGit([string]$DataDir, [hashtable]$Tool) {
     # est gardé tel quel ; sinon un PortableGit déjà provisionné est réutilisé.
     $min = $Tool['min_version']
     if ($script:Simulate) {
-        $v = $env:WDS_INSTALL_SIMULATE_GIT
+        $v = $env:DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT
         if ($v -and $v -ne 'none' -and (Test-VersionAtLeast $v $min)) { return @{ Path = 'git'; Version = $v; Source = 'host' } }
     }
     else {
@@ -305,7 +342,7 @@ function Install-PortableGit([string]$DataDir, [hashtable]$Tool) {
     if ($script:Simulate) {
         Add-SimLog "portablegit -y -gm2 -InstallPath=$target"
         if (Test-SimulatedFailure 'portablegit') {
-            throw (New-InstallError 'L''extraction de PortableGit a échoué (simulation).' @('WDS_DATA_DIR (dossier accessible en écriture, hors antivirus restrictif)') $script:RouteText)
+            throw (New-InstallError 'L''extraction de PortableGit a échoué (simulation).' @('DEVSECOPS_DOJO_DATA_DIR (dossier accessible en écriture, hors antivirus restrictif)') $script:RouteText)
         }
         New-Item -ItemType Directory -Path (Join-Path $target 'cmd') -Force | Out-Null
         [IO.File]::WriteAllText((Join-Path $target 'cmd\git.exe'), 'simulation')
@@ -315,7 +352,7 @@ function Install-PortableGit([string]$DataDir, [hashtable]$Tool) {
         if ($code -ne 0 -or -not (Test-Path -LiteralPath (Join-Path $target 'cmd\git.exe'))) {
             Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction SilentlyContinue
             Remove-Item -LiteralPath $archive -Force -ErrorAction SilentlyContinue   # archive peut-être corrompue : retéléchargée
-            throw (New-InstallError "L'extraction de PortableGit a échoué (code $code)." @('WDS_DATA_DIR (dossier accessible en écriture)', 'exclusion de l''antivirus pour ce dossier') $script:RouteText)
+            throw (New-InstallError "L'extraction de PortableGit a échoué (code $code)." @('DEVSECOPS_DOJO_DATA_DIR (dossier accessible en écriture)', 'exclusion de l''antivirus pour ce dossier') $script:RouteText)
         }
     }
     Remove-Item -LiteralPath $archive -Force -ErrorAction SilentlyContinue
@@ -325,7 +362,7 @@ function Install-PortableGit([string]$DataDir, [hashtable]$Tool) {
 function Get-HostUv([hashtable]$Tool) {
     $min = $Tool['min_version']
     if ($script:Simulate) {
-        $v = $env:WDS_INSTALL_SIMULATE_UV
+        $v = $env:DEVSECOPS_DOJO_INSTALL_SIMULATE_UV
         if ($v -and $v -ne 'none' -and (Test-VersionAtLeast $v $min)) { return @{ Path = 'uv'; Version = $v } }
         return $null
     }
@@ -391,12 +428,12 @@ function Install-Uv([string]$DataDir, [hashtable]$Tool) {
 
 function Assert-AppDirReplaceable([string]$AppDir) {
     # Un dossier « app » existant n'est remplacé que s'il est vide ou contient l'application
-    # (pyproject.toml ou .git) : un WDS_DATA_DIR mal placé ne doit pas effacer un dossier de l'utilisateur.
+    # (pyproject.toml ou .git) : un DEVSECOPS_DOJO_DATA_DIR mal placé ne doit pas effacer un dossier de l'utilisateur.
     if (-not (Test-Path -LiteralPath $AppDir)) { return }
     if (Test-Path -LiteralPath (Join-Path $AppDir 'pyproject.toml')) { return }
     if (Test-Path -LiteralPath (Join-Path $AppDir '.git')) { return }
     if (@(Get-ChildItem -LiteralPath $AppDir -Force).Count -eq 0) { return }
-    throw (New-InstallError "Le dossier « $AppDir » existe et ne contient pas l'application : il n'est pas modifié." @('WDS_DATA_DIR (dossier réservé à WaveDevSecOps)') 'choisissez un autre WDS_DATA_DIR, ou videz ce dossier « app » vous-même, puis relancez la commande.')
+    throw (New-InstallError "Le dossier « $AppDir » existe et ne contient pas l'application : il n'est pas modifié." @('DEVSECOPS_DOJO_DATA_DIR (dossier réservé à DevSecOps Dojo)') 'choisissez un autre DEVSECOPS_DOJO_DATA_DIR, ou videz ce dossier « app » vous-même, puis relancez la commande.')
 }
 
 function Install-AppByClone([string]$DataDir, [string]$AppDir, [string]$GitExe, [string]$Ref) {
@@ -442,7 +479,7 @@ function Install-AppByClone([string]$DataDir, [string]$AppDir, [string]$GitExe, 
 function Install-AppByZip([string]$DataDir, [string]$AppDir, [string]$Ref) {
     Assert-AppDirReplaceable $AppDir
     $url = "$script:ZipUrlBase/$Ref.zip"
-    $zip = Join-Path $DataDir "cache\downloads\wavedevsecops-$($Ref -replace '[\\/]', '_').zip"
+    $zip = Join-Path $DataDir "cache\downloads\devsecops-dojo-$($Ref -replace '[\\/]', '_').zip"
     Remove-Item -LiteralPath $zip -Force -ErrorAction SilentlyContinue   # un zip de branche change : toujours frais
     Save-File $url $zip
     $staging = "$AppDir.new"
@@ -458,7 +495,7 @@ function Install-AppByZip([string]$DataDir, [string]$AppDir, [string]$Ref) {
             Expand-Archive -LiteralPath $zip -DestinationPath $staging -Force
             $inner = @(Get-ChildItem -LiteralPath $staging -Directory)
             if ($inner.Count -eq 1 -and -not (Test-Path -LiteralPath (Join-Path $staging 'pyproject.toml'))) {
-                # Le zip GitHub contient un seul dossier « wavedevsecops-<ref> » : on le remonte.
+                # Le zip GitHub contient un seul dossier « devsecops-dojo-<ref> » : on le remonte.
                 $tmp = "$staging.inner"
                 Move-Item -LiteralPath $inner[0].FullName -Destination $tmp
                 Remove-Item -LiteralPath $staging -Recurse -Force
@@ -467,11 +504,11 @@ function Install-AppByZip([string]$DataDir, [string]$AppDir, [string]$Ref) {
         }
         catch {
             Remove-Item -LiteralPath $staging -Recurse -Force -ErrorAction SilentlyContinue
-            throw (New-InstallError "Le zip n'a pas pu être extrait : $($_.Exception.Message)" @('WDS_DATA_DIR (dossier accessible en écriture)') $script:RouteText)
+            throw (New-InstallError "Le zip n'a pas pu être extrait : $($_.Exception.Message)" @('DEVSECOPS_DOJO_DATA_DIR (dossier accessible en écriture)') $script:RouteText)
         }
         if (-not (Test-Path -LiteralPath (Join-Path $staging 'pyproject.toml'))) {
             Remove-Item -LiteralPath $staging -Recurse -Force -ErrorAction SilentlyContinue
-            throw (New-InstallError 'Le zip ne contient pas l''application attendue (pyproject.toml absent).' @('WDS_INSTALL_REF') $script:RouteText)
+            throw (New-InstallError 'Le zip ne contient pas l''application attendue (pyproject.toml absent).' @('DEVSECOPS_DOJO_INSTALL_REF') $script:RouteText)
         }
     }
     # Remplacement : l'ancienne version est mise de côté puis supprimée, jamais effacée avant que la nouvelle soit prête.
@@ -606,7 +643,7 @@ function Install-Gitleaks([string]$DataDir, [hashtable]$Tool) {
     if (-not (Test-Path -LiteralPath (Join-Path $staging 'gitleaks.exe'))) {
         Remove-Item -LiteralPath $staging -Recurse -Force -ErrorAction SilentlyContinue
         Remove-Item -LiteralPath $archive -Force -ErrorAction SilentlyContinue
-        throw (New-InstallError 'L''archive de gitleaks ne contient pas l''exécutable attendu.' @('WDS_DATA_DIR (dossier accessible en écriture)') $script:RouteText)
+        throw (New-InstallError 'L''archive de gitleaks ne contient pas l''exécutable attendu.' @('DEVSECOPS_DOJO_DATA_DIR (dossier accessible en écriture)') $script:RouteText)
     }
     if (Test-Path -LiteralPath $target) { Remove-Item -LiteralPath $target -Recurse -Force }
     Move-Item -LiteralPath $staging -Destination $target
@@ -630,11 +667,12 @@ function Get-RegistryPath([string]$DataDir, [string]$Ref) {
 function Invoke-Install {
     $watch = [Diagnostics.Stopwatch]::StartNew()
     $dataDir = Get-DataDir
-    $method = if ($env:WDS_INSTALL_METHOD) { $env:WDS_INSTALL_METHOD.Trim().ToLowerInvariant() } else { 'clone' }
+    Copy-LegacyDataDir $dataDir
+    $method = if ($env:DEVSECOPS_DOJO_INSTALL_METHOD) { $env:DEVSECOPS_DOJO_INSTALL_METHOD.Trim().ToLowerInvariant() } else { 'clone' }
     if ($method -notin @('clone', 'zip')) {
-        throw (New-InstallError "WDS_INSTALL_METHOD vaut « $method » : seules les valeurs clone et zip existent." @('WDS_INSTALL_METHOD=clone ou zip') '')
+        throw (New-InstallError "DEVSECOPS_DOJO_INSTALL_METHOD vaut « $method » : seules les valeurs clone et zip existent." @('DEVSECOPS_DOJO_INSTALL_METHOD=clone ou zip') '')
     }
-    $ref = if ($env:WDS_INSTALL_REF) { $env:WDS_INSTALL_REF.Trim() } else { 'main' }
+    $ref = if ($env:DEVSECOPS_DOJO_INSTALL_REF) { $env:DEVSECOPS_DOJO_INSTALL_REF.Trim() } else { 'main' }
     $appDir = Join-Path $dataDir 'app'
 
     Write-Step 'Préparation'
@@ -671,7 +709,7 @@ function Invoke-Install {
         $git = Get-HostGit $dataDir $registry['git']
         if ($git) { $versions['git'] = $git.Version; $versions['git_source'] = $git.Source }
         else {
-            Write-Info "Attention : git $($registry['git']['min_version']) ou plus est introuvable. La voie zip s'en passe pour l'installation, mais les exercices en ont besoin : relancez sans WDS_INSTALL_METHOD=zip pour que l'installeur le provisionne, ou installez git vous-même."
+            Write-Info "Attention : git $($registry['git']['min_version']) ou plus est introuvable. La voie zip s'en passe pour l'installation, mais les exercices en ont besoin : relancez sans DEVSECOPS_DOJO_INSTALL_METHOD=zip pour que l'installeur le provisionne, ou installez git vous-même."
             Add-SimLog 'zip: git absent, non provisionné'
         }
     }
@@ -711,7 +749,7 @@ function Invoke-Install {
     Write-Host ''
     Write-Host 'Installation terminée.' -ForegroundColor Green
     Write-Host 'Lancer l''application :'
-    Write-Host "    & `"$($uv.Path)`" run --project `"$appDir`" wavedevsecops"
+    Write-Host "    & `"$($uv.Path)`" run --project `"$appDir`" devsecops-dojo"
     if ($script:Proxy) { Write-Host 'Derrière un proxy, gardez UV_SYSTEM_CERTS=true et NO_PROXY=127.0.0.1,localhost pour les prochains lancements.' }
 }
 
@@ -736,4 +774,4 @@ function Start-Installer {
     }
 }
 
-if ($env:WDS_INSTALL_LIBONLY -ne '1') { Start-Installer }
+if ($env:DEVSECOPS_DOJO_INSTALL_LIBONLY -ne '1') { Start-Installer }

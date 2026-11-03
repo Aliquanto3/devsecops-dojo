@@ -15,7 +15,7 @@ Source : `_bmad-output/planning-artifacts/epics.md`, section « Story 1.1 ».
 
 - `pyproject.toml` (uv, `uv_build`) : version `0.1.0.dev0`, Python `>=3.14,<3.15` (`.python-version` 3.14), dépendances, groupes `chain` (outils de la chaîne) et `dev` (ruff, pytest), extra `window` (pywebview 6.2.1), toutes épinglées `==` aux versions de la table Stack ; `uv.lock` commité.
 - `.gitattributes` `* text=auto eol=lf`.
-- `src/wavedevsecops/` : `config.py` (`Settings` pydantic figé, `Settings.from_env()` sur les variables `WDS_*`, `get_settings()`), `contracts/`, `events/`, `procs/` (squelettes documentés) ; `content/` (vide) ; `tests/`.
+- `src/devsecops_dojo/` : `config.py` (`Settings` pydantic figé, `Settings.from_env()` sur les variables `DEVSECOPS_DOJO_*`, `get_settings()`), `contracts/`, `events/`, `procs/` (squelettes documentés) ; `content/` (vide) ; `tests/`.
 - Tests :
   - `test_architecture.py` : règles d'AD-1 (feuilles, personne n'importe `web` ni `cli` sauf `cli` → `web`, `procs` réservé à `gitio`/`toolrun`, `subprocess` réservé à `procs`) et lecture de l'environnement réservée à `config` ;
   - `test_offline_rules.py` : AD-13 contrôles (1) imports réseau et (2) URL de `web/static/` ;

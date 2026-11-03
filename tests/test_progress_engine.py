@@ -14,15 +14,15 @@ import pytest
 from test_steps import Box, make_box  # noqa: F401 - `make_box` est une fixture
 from test_steps import _kinds as kinds
 
-from wavedevsecops.engine import (
+from devsecops_dojo.engine import (
     Operation,
     WorkspaceManager,
     list_snapshots,
     load_run,
     save_run,
 )
-from wavedevsecops.events import Envelope, Kind
-from wavedevsecops.progress.facts import ProgressStore
+from devsecops_dojo.events import Envelope, Kind
+from devsecops_dojo.progress.facts import ProgressStore
 
 
 def _facts(box: Box) -> list[dict]:

@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import (
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import (
     INTENTS,
     OpContext,
     Operation,
@@ -21,10 +21,10 @@ from wavedevsecops.engine import (
     hints,
     load_run,
 )
-from wavedevsecops.events import Envelope, Kind
-from wavedevsecops.gitio import Git
-from wavedevsecops.progress.facts import ProgressStore
-from wavedevsecops.scenarios import load_scenario, parse_scenario
+from devsecops_dojo.events import Envelope, Kind
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.progress.facts import ProgressStore
+from devsecops_dojo.scenarios import load_scenario, parse_scenario
 
 WAIT = 60.0
 
@@ -251,9 +251,7 @@ def test_le_fait_porte_palier_delai_et_temps_de_lecture(make_box) -> None:
     assert (first["tier"], first["delay_ms"], first["read_ms"]) == (1, 5000, 7000)
     assert (second["tier"], second["delay_ms"], second["read_ms"]) == (2, 12000, 4000)
     assert (first["track"], first["scenario_id"], first["mode"]) == ("llm", "indices", "A")
-    state = ProgressStore.for_dir(box.settings.resolved_data_dir()).progress(
-        "llm", "indices", "A"
-    )
+    state = ProgressStore.for_dir(box.settings.resolved_data_dir()).progress("llm", "indices", "A")
     assert state.hints == 2
 
 
@@ -337,7 +335,7 @@ def test_recommencer_clot_la_lecture_avant_de_reconstruire(make_box) -> None:
 @pytest.mark.slow
 def test_une_commande_refusee_compte_comme_essai(make_box) -> None:
     """Revue L5 : une commande tapée, même refusée par la liste blanche, est un essai."""
-    from wavedevsecops import terminal  # noqa: PLC0415
+    from devsecops_dojo import terminal  # noqa: PLC0415
 
     terminal.register_intents()
     box = make_box()

@@ -14,9 +14,9 @@ import pytest
 from test_procs_spawn import alive, wait_dead
 from test_workspace_api import Stream, _call
 
-from wavedevsecops import cli, gitio, terminal
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import (
+from devsecops_dojo import cli, gitio, terminal
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import (
     OpContext,
     Operation,
     OperationRefused,
@@ -24,10 +24,10 @@ from wavedevsecops.engine import (
     WorkspaceManager,
     prepare_workspace,
 )
-from wavedevsecops.events import Envelope, Kind
-from wavedevsecops.scenarios import load_scenario
-from wavedevsecops.terminal import GitCommand, TerminalLine, build_terminal_line
-from wavedevsecops.wsfs import Layout
+from devsecops_dojo.events import Envelope, Kind
+from devsecops_dojo.scenarios import load_scenario
+from devsecops_dojo.terminal import GitCommand, TerminalLine, build_terminal_line
+from devsecops_dojo.wsfs import Layout
 
 FREE = Path(__file__).resolve().parent.parent / "content" / "scenarios" / "bac-a-sable-libre.A.yaml"
 WS = "llm.bac-a-sable-libre.A"
@@ -321,8 +321,8 @@ def test_push_sur_une_branche_protegee_est_refuse_et_explique(
     space: Space, english: None, git_path: Path
 ) -> None:
     """Story 3.5 : le hook `pre-receive` refuse (`remote:`), le terminal dit pourquoi."""
-    from wavedevsecops import github_sim, hooks, wsfs
-    from wavedevsecops.contracts.github import BranchProtection
+    from devsecops_dojo import github_sim, hooks, wsfs
+    from devsecops_dojo.contracts.github import BranchProtection
 
     space.identify()
     space.write("notes.md", "notes\n")
@@ -346,8 +346,8 @@ def test_push_sur_une_branche_protegee_est_refuse_et_explique(
 
 
 def _protect_main(space: Space, git_path: Path) -> gitio.Git:
-    from wavedevsecops import github_sim, hooks, wsfs
-    from wavedevsecops.contracts.github import BranchProtection
+    from devsecops_dojo import github_sim, hooks, wsfs
+    from devsecops_dojo.contracts.github import BranchProtection
 
     git = gitio.Git.for_workspace(git_path, space.layout.root, space.settings)
     git.internal("config", "core.hooksPath", "../hooks", cwd=space.layout.origin)
@@ -402,7 +402,7 @@ def test_le_terminal_repare_un_hook_dont_python_a_disparu(
 ) -> None:
     """Revue 3.5 : un hook qui vise un Python disparu refuserait tout push ; le terminal le
     réécrit avec l'interpréteur de l'application avant `git push`."""
-    from wavedevsecops import hooks, wsfs
+    from devsecops_dojo import hooks, wsfs
 
     space.identify()
     _protect_main(space, git_path)
@@ -522,7 +522,7 @@ def test_la_sortie_arrive_au_fil_de_l_eau(space: Space, tmp_path: Path, english:
 
 
 def test_intention_enregistree_une_seule_fois() -> None:
-    from wavedevsecops.engine import INTENTS
+    from devsecops_dojo.engine import INTENTS
 
     terminal.register_intents()
     terminal.register_intents()
@@ -531,7 +531,7 @@ def test_intention_enregistree_une_seule_fois() -> None:
 
 @pytest.mark.slow
 def test_validation_de_l_intention(space: Space) -> None:
-    from wavedevsecops.engine import InvalidIntent, build_operation
+    from devsecops_dojo.engine import InvalidIntent, build_operation
 
     terminal.register_intents()
     with pytest.raises(InvalidIntent):

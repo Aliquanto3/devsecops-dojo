@@ -1,6 +1,6 @@
 """Installeur Windows (Story 1.6) : `install.ps1` exécuté par Windows PowerShell 5.1.
 
-Aucun accès réseau ni installation réelle : le mode simulation (`WDS_INSTALL_SIMULATE=1`)
+Aucun accès réseau ni installation réelle : le mode simulation (`DEVSECOPS_DOJO_INSTALL_SIMULATE=1`)
 journalise les actions dans `<data>/install.simulation.log` et fabrique de faux artefacts.
 Le téléchargement réel, PortableGit, le proxy et l'absence de droits administrateur ne se
 vérifient que sur un poste Windows réel.
@@ -18,8 +18,8 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops.config import Settings
-from wavedevsecops.registry import load_registry
+from devsecops_dojo.config import Settings
+from devsecops_dojo.registry import load_registry
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "install.ps1"
@@ -29,8 +29,12 @@ pytestmark = pytest.mark.skipif(POWERSHELL is None, reason="Windows PowerShell a
 
 
 def _env(data: Path, **extra: str) -> dict[str, str]:
-    env = {k: v for k, v in os.environ.items() if not k.upper().startswith(("WDS_", "HTTPS_PROXY"))}
-    env.update(WDS_DATA_DIR=str(data), WDS_INSTALL_SIMULATE="1", **extra)
+    env = {
+        k: v
+        for k, v in os.environ.items()
+        if not k.upper().startswith(("DEVSECOPS_DOJO_", "WDS_", "HTTPS_PROXY"))
+    }
+    env.update(DEVSECOPS_DOJO_DATA_DIR=str(data), DEVSECOPS_DOJO_INSTALL_SIMULATE="1", **extra)
     return env
 
 
@@ -62,7 +66,9 @@ def _install(data: Path, **extra: str) -> subprocess.CompletedProcess[str]:
 
 def _lib(expression: str, data: Path) -> str:
     """Évalue une expression PowerShell après chargement des fonctions de l'installeur."""
-    out = _run(["-Command", f". '{SCRIPT}'; {expression}"], _env(data, WDS_INSTALL_LIBONLY="1"))
+    out = _run(
+        ["-Command", f". '{SCRIPT}'; {expression}"], _env(data, DEVSECOPS_DOJO_INSTALL_LIBONLY="1")
+    )
     assert out.returncode == 0, out.stderr
     return out.stdout.strip()
 
@@ -74,6 +80,33 @@ def _log(data: Path) -> list[str]:
 def test_script_utf8_avec_bom() -> None:
     # Windows PowerShell 5.1 lit en ANSI un fichier UTF-8 sans BOM : les accents seraient cassés.
     assert SCRIPT.read_bytes().startswith(b"\xef\xbb\xbf")
+
+
+def test_migration_de_l_ancien_dossier_de_donnees(tmp_path: Path) -> None:
+    old = tmp_path / "WaveDevSecOps"
+    (old / "app").mkdir(parents=True)
+    (old / "progress.json").write_text("{}", encoding="utf-8")
+    (old / "app.lock").write_text("verrou", encoding="utf-8")
+    for venv in ("workspaces/w/cache/venv", "workspaces/w/ci/venv-0123456789ab"):
+        (old / venv).mkdir(parents=True)
+        (old / venv / "pyvenv.cfg").write_text("home = C:/x\n", encoding="utf-8")
+    (old / "workspaces" / "w" / "run.json").write_text("{}", encoding="utf-8")
+    new = tmp_path / "DevSecOpsDojo"
+    env = {
+        k: v for k, v in os.environ.items() if not k.upper().startswith(("DEVSECOPS_DOJO_", "WDS_"))
+    }
+    out = _run(
+        ["-Command", f". '{SCRIPT}'; Copy-LegacyDataDir '{new}'; Copy-LegacyDataDir '{new}'"],
+        {**env, "DEVSECOPS_DOJO_INSTALL_LIBONLY": "1"},
+    )
+    assert out.returncode == 0, out.stderr
+    assert (new / "progress.json").read_text(encoding="utf-8") == "{}"
+    assert not (new / "app").exists() and not (new / "app.lock").exists()
+    assert (new / "workspaces" / "w" / "run.json").is_file()
+    assert not (new / "workspaces" / "w" / "cache" / "venv").exists()
+    assert not (new / "workspaces" / "w" / "ci" / "venv-0123456789ab").exists()
+    assert (old / "app.lock").exists() and (old / "app").is_dir()
+    assert not list(tmp_path.glob("*.migration-*"))
 
 
 @pytest.mark.slow
@@ -113,13 +146,21 @@ def test_url_portablegit(tmp_path: Path) -> None:
 
 
 def test_dossier_de_donnees_comme_l_application() -> None:
-    env = {k: v for k, v in os.environ.items() if not k.upper().startswith("WDS_")}
-    out = _run(["-Command", f". '{SCRIPT}'; Get-DataDir"], {**env, "WDS_INSTALL_LIBONLY": "1"})
+    env = {
+        k: v for k, v in os.environ.items() if not k.upper().startswith(("DEVSECOPS_DOJO_", "WDS_"))
+    }
+    out = _run(
+        ["-Command", f". '{SCRIPT}'; Get-DataDir"], {**env, "DEVSECOPS_DOJO_INSTALL_LIBONLY": "1"}
+    )
     assert Path(out.stdout.strip()) == Settings().resolved_data_dir()
 
 
 def test_installation_simulee_avec_git_du_poste(tmp_path: Path) -> None:
-    out = _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0", WDS_INSTALL_SIMULATE_UV="0.13.1")
+    out = _install(
+        tmp_path,
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_UV="0.13.1",
+    )
     assert out.returncode == 0, out.stdout + out.stderr
     log = "\n".join(_log(tmp_path))
     assert "portablegit" not in log and "uv-install" not in log
@@ -134,7 +175,7 @@ def test_installation_simulee_avec_git_du_poste(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize("host_git", ["none", "2.30.0"])
 def test_git_provisionne_si_absent_ou_trop_ancien(tmp_path: Path, host_git: str) -> None:
-    out = _install(tmp_path, WDS_INSTALL_SIMULATE_GIT=host_git)
+    out = _install(tmp_path, DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT=host_git)
     assert out.returncode == 0, out.stdout + out.stderr
     log = "\n".join(_log(tmp_path))
     assert "PortableGit-2.56.0.2" in log
@@ -146,7 +187,7 @@ def test_git_provisionne_si_absent_ou_trop_ancien(tmp_path: Path, host_git: str)
 
 
 def test_mise_a_jour_conserve_progress(tmp_path: Path) -> None:
-    env = {"WDS_INSTALL_SIMULATE_GIT": "2.43.0"}
+    env = {"DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT": "2.43.0"}
     assert _install(tmp_path, **env).returncode == 0
     first = json.loads((tmp_path / "install.json").read_text("utf-8"))
     progress = tmp_path / "progress.json"
@@ -161,20 +202,24 @@ def test_mise_a_jour_conserve_progress(tmp_path: Path) -> None:
 
 
 def test_echec_telechargement_message_francais_et_reprise(tmp_path: Path) -> None:
-    out = _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="none", WDS_INSTALL_SIMULATE_FAIL="download")
+    out = _install(
+        tmp_path,
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="none",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL="download",
+    )
     assert out.returncode == 1
     text = out.stdout
     assert "Cause :" in text and "HTTPS_PROXY" in text and "UV_SYSTEM_CERTS" in text
     assert "clone" in text and "zip" in text and "Relancez" in text
     assert not (tmp_path / "install.json").exists()
-    out = _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="none")
+    out = _install(tmp_path, DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="none")
     assert out.returncode == 0, out.stdout
     assert (tmp_path / "install.json").exists()
 
 
 def test_reprise_apres_echec_partiel_du_sync(tmp_path: Path) -> None:
-    env = {"WDS_INSTALL_SIMULATE_GIT": "2.43.0"}
-    assert _install(tmp_path, WDS_INSTALL_SIMULATE_FAIL="sync", **env).returncode == 1
+    env = {"DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT": "2.43.0"}
+    assert _install(tmp_path, DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL="sync", **env).returncode == 1
     assert not (tmp_path / "install.json").exists()
     assert (tmp_path / "app" / ".git").exists()
     assert _install(tmp_path, **env).returncode == 0
@@ -184,7 +229,9 @@ def test_reprise_apres_echec_partiel_du_sync(tmp_path: Path) -> None:
 
 
 def test_voie_zip(tmp_path: Path) -> None:
-    out = _install(tmp_path, WDS_INSTALL_METHOD="zip", WDS_INSTALL_SIMULATE_GIT="none")
+    out = _install(
+        tmp_path, DEVSECOPS_DOJO_INSTALL_METHOD="zip", DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="none"
+    )
     assert out.returncode == 0, out.stdout + out.stderr
     log = "\n".join(_log(tmp_path))
     assert "portablegit" not in log and "zip-extract" in log and "archive/main.zip" in log
@@ -195,21 +242,23 @@ def test_voie_zip(tmp_path: Path) -> None:
 
 
 def test_methode_inconnue_refusee(tmp_path: Path) -> None:
-    out = _install(tmp_path, WDS_INSTALL_METHOD="ftp")
+    out = _install(tmp_path, DEVSECOPS_DOJO_INSTALL_METHOD="ftp")
     assert out.returncode == 1 and "clone et zip" in out.stdout
 
 
 def test_install_json_futur_non_modifie(tmp_path: Path) -> None:
     future = '{"schema_version": 99}'
     (tmp_path / "install.json").write_text(future, "utf-8")
-    out = _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0")
+    out = _install(tmp_path, DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0")
     assert out.returncode == 1 and "plus récente" in out.stdout
     assert (tmp_path / "install.json").read_text("utf-8") == future
 
 
 def test_proxy_pose_uv_system_certs(tmp_path: Path) -> None:
     out = _install(
-        tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0", HTTPS_PROXY="http://proxy.invalid:8080"
+        tmp_path,
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0",
+        HTTPS_PROXY="http://proxy.invalid:8080",
     )
     assert out.returncode == 0, out.stdout
     assert "Proxy détecté" in out.stdout and "UV_SYSTEM_CERTS=true" in out.stdout
@@ -224,9 +273,9 @@ def _readme_command() -> str:
 
 def _paste(data: Path, after: str = "", **extra: str) -> subprocess.CompletedProcess[str]:
     """Exécute la commande du README telle quelle (voie `iex`), le script lu en `file://`."""
-    raw = "https://raw.githubusercontent.com/Aliquanto3/wavedevsecops/main/install.ps1"
+    raw = "https://raw.githubusercontent.com/Aliquanto3/devsecops-dojo/main/install.ps1"
     command = _readme_command().replace(raw, SCRIPT.as_uri())
-    env = _env(data, WDS_INSTALL_SIMULATE_TOOLS_TOML=str(ROOT / "tools.toml"), **extra)
+    env = _env(data, DEVSECOPS_DOJO_INSTALL_SIMULATE_TOOLS_TOML=str(ROOT / "tools.toml"), **extra)
     return _run(["-Command", f"$ErrorActionPreference = 'Continue'; {command}; {after}"], env)
 
 
@@ -236,10 +285,12 @@ def test_commande_du_readme_identique_a_l_entete() -> None:
 
 
 def test_voie_iex_installe_en_simulation(tmp_path: Path) -> None:
-    out = _paste(tmp_path, "'EAP=' + $ErrorActionPreference", WDS_INSTALL_SIMULATE_GIT="2.43.0")
+    out = _paste(
+        tmp_path, "'EAP=' + $ErrorActionPreference", DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0"
+    )
     assert out.returncode == 0, out.stdout + out.stderr
     assert "Installation terminée" in out.stdout
-    assert "raw.githubusercontent.com/Aliquanto3/wavedevsecops/main/tools.toml" in "\n".join(
+    assert "raw.githubusercontent.com/Aliquanto3/devsecops-dojo/main/tools.toml" in "\n".join(
         _log(tmp_path)
     )
     assert json.loads((tmp_path / "install.json").read_text("utf-8"))["versions"]["git"] == "2.43.0"
@@ -250,8 +301,8 @@ def test_voie_iex_echec_ne_ferme_pas_la_console(tmp_path: Path) -> None:
     out = _paste(
         tmp_path,
         "'APRES=' + $LASTEXITCODE",
-        WDS_INSTALL_SIMULATE_GIT="none",
-        WDS_INSTALL_SIMULATE_FAIL="download",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="none",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL="download",
     )
     assert "Cause :" in out.stdout and "Relancez" in out.stdout
     assert "APRES=1" in out.stdout
@@ -285,7 +336,11 @@ def test_dossier_app_etranger_non_supprime(tmp_path: Path) -> None:
     foreign.parent.mkdir()
     foreign.write_text("à garder", "utf-8")
     for method in ("clone", "zip"):
-        out = _install(tmp_path, WDS_INSTALL_METHOD=method, WDS_INSTALL_SIMULATE_GIT="2.43.0")
+        out = _install(
+            tmp_path,
+            DEVSECOPS_DOJO_INSTALL_METHOD=method,
+            DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0",
+        )
         assert out.returncode == 1 and "ne contient pas l'application" in out.stdout
         assert foreign.read_text("utf-8") == "à garder"
 
@@ -295,7 +350,7 @@ def test_dossier_app_etranger_non_supprime(tmp_path: Path) -> None:
 
 @pytest.mark.slow
 def test_gitleaks_et_cache_uv_provisionnes(tmp_path: Path) -> None:
-    out = _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0")
+    out = _install(tmp_path, DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0")
     assert out.returncode == 0, out.stdout + out.stderr
     log = _log(tmp_path)
     base = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/"
@@ -309,13 +364,15 @@ def test_gitleaks_et_cache_uv_provisionnes(tmp_path: Path) -> None:
     record = json.loads((tmp_path / "install.json").read_text("utf-8"))
     assert record["versions"]["gitleaks"] == "8.30.1"
     # Relancé : gitleaks déjà là, pas de second téléchargement.
-    assert _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0").returncode == 0
+    assert _install(tmp_path, DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0").returncode == 0
     assert sum(line.startswith("gitleaks-extract") for line in _log(tmp_path)) == 1
 
 
 def test_somme_fausse_arrete_gitleaks(tmp_path: Path) -> None:
     out = _install(
-        tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0", WDS_INSTALL_SIMULATE_FAIL="checksum"
+        tmp_path,
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL="checksum",
     )
     assert out.returncode == 1
     assert "ne correspond pas" in out.stdout and "gitleaks" in out.stdout
@@ -323,11 +380,15 @@ def test_somme_fausse_arrete_gitleaks(tmp_path: Path) -> None:
     assert not (tmp_path / "install.json").exists()
     assert not (tmp_path / "tools" / "gitleaks").exists()
     assert not list((tmp_path / "cache" / "downloads").glob("gitleaks_*"))
-    assert _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0").returncode == 0
+    assert _install(tmp_path, DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0").returncode == 0
 
 
 def test_echec_du_prechargement_message_francais(tmp_path: Path) -> None:
-    out = _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0", WDS_INSTALL_SIMULATE_FAIL="preload")
+    out = _install(
+        tmp_path,
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL="preload",
+    )
     assert out.returncode == 1
     assert "préchargement du cache uv" in out.stdout and "HTTPS_PROXY" in out.stdout
     assert not (tmp_path / "install.json").exists()
@@ -335,8 +396,8 @@ def test_echec_du_prechargement_message_francais(tmp_path: Path) -> None:
 
 def test_sha256_sans_get_filehash(tmp_path: Path) -> None:
     sample = tmp_path / "a.bin"
-    sample.write_bytes(b"wavedevsecops")
-    expected = hashlib.sha256(b"wavedevsecops").hexdigest()
+    sample.write_bytes(b"devsecops_dojo")
+    expected = hashlib.sha256(b"devsecops_dojo").hexdigest()
     assert _lib(f"Get-Sha256 '{sample}'", tmp_path) == expected
 
 

@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops.terminal.allowlist import Allowlist, get_allowlist, load_allowlist
-from wavedevsecops.terminal.parse import Refused, parse_line, tokenize
+from devsecops_dojo.terminal.allowlist import Allowlist, get_allowlist, load_allowlist
+from devsecops_dojo.terminal.parse import Refused, parse_line, tokenize
 
 ALLOWLIST = Path(__file__).resolve().parent.parent / "content" / "terminal-allowlist.yaml"
 
@@ -27,8 +27,17 @@ def test_decoupeur_posix(allow: Allowlist) -> None:
     assert words('git commit -m "a \\"b\\" c"', allow) == ["git", "commit", "-m", 'a "b" c']
     assert words("git add a\\ b.txt", allow) == ["git", "add", "a b.txt"]
     assert words("git commit -m ''", allow) == ["git", "commit", "-m", ""]
-    assert words("git log --pretty=format:'%h %s'", allow) == ["git", "log", "--pretty=format:%h %s"]
-    assert words("git log HEAD@{1} 'a|b' \"c;d\" 'x$y'", allow)[2:] == ["HEAD@{1}", "a|b", "c;d", "x$y"]
+    assert words("git log --pretty=format:'%h %s'", allow) == [
+        "git",
+        "log",
+        "--pretty=format:%h %s",
+    ]
+    assert words("git log HEAD@{1} 'a|b' \"c;d\" 'x$y'", allow)[2:] == [
+        "HEAD@{1}",
+        "a|b",
+        "c;d",
+        "x$y",
+    ]
     # Un `$` seul ou en fin de mot n'est pas une expansion ; les globs restent tels quels.
     assert words("git add *.py 5$ '$'", allow) == ["git", "add", "*.py", "5$", "$"]
     assert words("   ", allow) == []
@@ -350,7 +359,7 @@ def test_message_manquant_et_remote_vise(allow: Allowlist) -> None:
 
 
 def test_le_fichier_unique_est_celui_du_depot() -> None:
-    from wavedevsecops.config import Settings
+    from devsecops_dojo.config import Settings
 
     assert get_allowlist(Settings()).git.keys() == load_allowlist(ALLOWLIST).git.keys()
 

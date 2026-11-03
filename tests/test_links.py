@@ -15,12 +15,12 @@ import yaml
 from test_catalogue import call, cookie, instance  # noqa: F401  (fixtures)
 from test_remote_dom import BLOCKED, _views
 
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts import Views, element_id, parse_element_id
-from wavedevsecops.projections import EXPLAIN_REFS
-from wavedevsecops.projections.diff import parse_diff
-from wavedevsecops.projections.links import PATH_ZONES, path_ids
-from wavedevsecops.web.explanations import load_explanations
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts import Views, element_id, parse_element_id
+from devsecops_dojo.projections import EXPLAIN_REFS
+from devsecops_dojo.projections.diff import parse_diff
+from devsecops_dojo.projections.links import PATH_ZONES, path_ids
+from devsecops_dojo.web.explanations import load_explanations
 
 CONTENT = Path(__file__).resolve().parent.parent / "content"
 SHA = "a" * 40
@@ -106,9 +106,7 @@ def test_les_liens_ne_citent_que_des_element_id_valides_et_sans_doublon(views: V
             parse_element_id(target)
 
 
-def test_sans_pr_les_liens_restent_ceux_du_graphe(
-    tmp_path: Path, git_path: Path
-) -> None:
+def test_sans_pr_les_liens_restent_ceux_du_graphe(tmp_path: Path, git_path: Path) -> None:
     free = Views.model_validate(_views(tmp_path, git_path, "libre", ""))
     assert not any(k.startswith("pr:") for k in free.names)
     assert free.links  # au moins les chemins et les refs

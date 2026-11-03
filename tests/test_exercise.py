@@ -15,11 +15,11 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import toolrun
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import WorkspaceError, prepare_workspace
-from wavedevsecops.scenarios import LoadedScenario, SetupError, parse_scenario
-from wavedevsecops.scenarios.ops.exercise_stage import LLM_STAGES, template_files
+from devsecops_dojo import toolrun
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import WorkspaceError, prepare_workspace
+from devsecops_dojo.scenarios import LoadedScenario, SetupError, parse_scenario
+from devsecops_dojo.scenarios.ops.exercise_stage import LLM_STAGES, template_files
 
 EXERCISE = Path(__file__).resolve().parent.parent / "content" / "exercise"
 REQUIRED = ("pyproject.toml", "uv.lock", "tests", ".gitignore", ".pre-commit-config.yaml")
@@ -103,22 +103,23 @@ def _prepare(track: str, stage: str, tmp_path: Path, git_path: Path) -> Path:
     return prepared.layout.repo
 
 
-USE_TEMPLATE_LOCK = os.environ.get("WDS_EXERCISE_UV") == "1"
+USE_TEMPLATE_LOCK = os.environ.get("DEVSECOPS_DOJO_EXERCISE_UV") == "1"
 """En CI : les tests du gabarit tournent dans son environnement verrouillé, créé par
 `toolrun.sync_environment` (`uv sync --offline --frozen`) depuis le cache uv préchargé comme
-le fait l'installeur, dans `WDS_EXERCISE_DATA` (AD-12), `httpx` compris. pytest est lancé par
+le fait l'installeur, dans `DEVSECOPS_DOJO_EXERCISE_DATA` (AD-12), `httpx`
+compris. pytest est lancé par
 `toolrun.run_tool` : résolu par le registre, garde réseau active.
 Sinon : avec l'interpréteur de l'application, sans `httpx`."""
 
 
 def _run_tests(repo: Path) -> tuple[int | None, str]:
     if USE_TEMPLATE_LOCK:
-        settings = Settings(data_dir=Path(os.environ["WDS_EXERCISE_DATA"]))
+        settings = Settings(data_dir=Path(os.environ["DEVSECOPS_DOJO_EXERCISE_DATA"]))
         venv = toolrun.venv_dir(repo.parent)
         synced = toolrun.sync_environment(repo, venv, settings)
         assert synced.ok, f"{synced.error}\n{synced.stdout}\n{synced.stderr}"
         site = toolrun.site_packages(venv)
-        assert site is not None and (site / "_wds_netguard.pth").is_file()
+        assert site is not None and (site / "_devsecops_dojo_netguard.pth").is_file()
         assert not (repo / ".venv").exists()  # le bac à sable reste propre
         ran = toolrun.run_tool(
             "pytest",
@@ -131,7 +132,7 @@ def _run_tests(repo: Path) -> tuple[int | None, str]:
         # Dans l'environnement du gabarit, aucun test n'est sauté (chemin `httpx` compris).
         assert "skipped" not in ran.stdout, ran.stdout
         return ran.returncode, f"{ran.error or ''}{ran.stdout}{ran.stderr}"
-    env = {k: v for k, v in os.environ.items() if not k.startswith(("PYTHON", "WDS_"))}
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("PYTHON", "DEVSECOPS_DOJO_"))}
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     argv = [
         sys.executable,

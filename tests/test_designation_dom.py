@@ -201,7 +201,9 @@ console.log(JSON.stringify({ emptyState, early, ready, posts,
     assert out["emptyState"][0] == "true" and out["emptyState"][1]
     assert out["early"] == 0
     assert out["ready"] is None
-    assert out["posts"] == [["/api/ws/w/answer_submit", {"step_id": "q", "slots": ["commit:" + "c" * 40]}]]
+    assert out["posts"] == [
+        ["/api/ws/w/answer_submit", {"step_id": "q", "slots": ["commit:" + "c" * 40]}]
+    ]
     assert out["tab"] == [True, True, True]
     assert out["label"] == "Ou saisir un SHA"
 
@@ -423,7 +425,9 @@ console.log(JSON.stringify({ bad, cleared }));
     assert out["bad"][0] == "true"
     assert out["bad"][1] == "Aucun commit ne correspond à ce SHA dans le bac à sable."
     assert out["bad"][2] == "alert" and "Aucun élément choisi" in out["bad"][3]
-    assert out["bad"][4] == 0 and out["bad"][5] is True  # aucune réponse envoyée : l'essai reste entier
+    assert (
+        out["bad"][4] == 0 and out["bad"][5] is True
+    )  # aucune réponse envoyée : l'essai reste entier
     assert out["cleared"] == [None, ""]
 
 
@@ -480,7 +484,10 @@ console.log(JSON.stringify({ focusAfterPlace, cleared, refused, slow: [slotText(
     assert out["focusAfterPlace"] is True
     assert out["cleared"] == ["", True]
     assert "Aucun élément choisi" in out["refused"][0]
-    assert out["refused"][1] == "Cette question n'attend pas de commit." and out["refused"][2] == "true"
+    assert (
+        out["refused"][1] == "Cette question n'attend pas de commit."
+        and out["refused"][2] == "true"
+    )
     assert "aaaaaaa" in out["slow"][0] and out["slow"][1] == 1
 
 

@@ -23,16 +23,16 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import ci, cli, github_sim, procs, toolrun
-from wavedevsecops.ci import findings as parsers
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts.github import Check, Finding, GithubState, PullRequest
-from wavedevsecops.engine import prepare_workspace
-from wavedevsecops.scenarios import load_scenario
-from wavedevsecops.scenarios.order import STATION_ORDER
-from wavedevsecops.scenarios.steps import pr_state
-from wavedevsecops.scenarios.steps._base import StepContext
-from wavedevsecops.wsfs import Layout
+from devsecops_dojo import ci, cli, github_sim, procs, toolrun
+from devsecops_dojo.ci import findings as parsers
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts.github import Check, Finding, GithubState, PullRequest
+from devsecops_dojo.engine import prepare_workspace
+from devsecops_dojo.scenarios import load_scenario
+from devsecops_dojo.scenarios.order import STATION_ORDER
+from devsecops_dojo.scenarios.steps import pr_state
+from devsecops_dojo.scenarios.steps._base import StepContext
+from devsecops_dojo.wsfs import Layout
 
 ROOT = Path(__file__).resolve().parent.parent
 SETTINGS = Settings()
@@ -325,7 +325,8 @@ MODULES = {
 @pytest.fixture
 def real_tools(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> list[str]:
     """`ci` lance les outils épinglés de l'environnement de développement (pas de réseau) ;
-    gitleaks seulement s'il est posé dans `WDS_EXERCISE_DATA` (la CI le fournit). Rend les outils
+    gitleaks seulement s'il est posé dans `DEVSECOPS_DOJO_EXERCISE_DATA`
+    (la CI le fournit). Rend les outils
     qui ne tournent pas."""
     for name in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy"):
         monkeypatch.delenv(name, raising=False)
@@ -335,7 +336,7 @@ def real_tools(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> list[str]:
         monkeypatch.delenv(name, raising=False)
     skipped: list[str] = []
     gitleaks = None
-    data = os.environ.get("WDS_EXERCISE_DATA")
+    data = os.environ.get("DEVSECOPS_DOJO_EXERCISE_DATA")
     if data:
         status = toolrun.resolve("gitleaks", Settings(data_dir=Path(data)))
         gitleaks = status.path if status.ok else None
@@ -636,8 +637,8 @@ def test_le_scenario_dependance_vulnerable_echoue_au_verrou_puis_passe_apres_cor
 def test_l_op_replace_in_file_remplace_un_texte_present_une_seule_fois(tmp_path: Path) -> None:
     from types import SimpleNamespace
 
-    from wavedevsecops.scenarios import SetupError
-    from wavedevsecops.scenarios.ops import REGISTRY, replace_in_file
+    from devsecops_dojo.scenarios import SetupError
+    from devsecops_dojo.scenarios.ops import REGISTRY, replace_in_file
 
     assert "replace_in_file" in REGISTRY
     ctx = SimpleNamespace(layout=SimpleNamespace(repo=tmp_path))

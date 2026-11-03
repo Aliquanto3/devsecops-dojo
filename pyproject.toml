@@ -1,5 +1,5 @@
 [project]
-name = "wavedevsecops"
+name = "devsecops-dojo"
 version = "0.2.0"
 description = "Application pédagogique locale pour apprendre git, GitHub, la CI/CD et le DevSecOps, hors ligne."
 readme = "README.md"
@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-wavedevsecops = "wavedevsecops.cli:main"
+devsecops-dojo = "devsecops_dojo.cli:main"
 
 [project.optional-dependencies]
 window = ["pywebview==6.2.1"]

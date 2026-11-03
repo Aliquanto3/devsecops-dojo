@@ -35,7 +35,7 @@ jobs:
       # dans uv-cache/python et paquets de chaque uv.lock du contenu (seule étape réseau). Les
       # tests des gabarits tournent ensuite dans un environnement créé par
       # `toolrun.sync_environment` (`uv sync --offline --frozen`), `httpx` compris
-      # (WDS_EXERCISE_UV, WDS_EXERCISE_DATA, tests/test_exercise.py).
+      # (DEVSECOPS_DOJO_EXERCISE_UV, DEVSECOPS_DOJO_EXERCISE_DATA, tests/test_exercise.py).
       - name: Précharger le cache uv des gabarits d'exercice
         shell: bash
         env:
@@ -68,8 +68,8 @@ jobs:
       - name: pytest
         run: uv run pytest -q --tb=short -n auto --durations=15
         env:
-          WDS_EXERCISE_UV: "1"
-          WDS_EXERCISE_DATA: ${{ runner.temp }}/wds-exercise
+          DEVSECOPS_DOJO_EXERCISE_UV: "1"
+          DEVSECOPS_DOJO_EXERCISE_DATA: ${{ runner.temp }}/wds-exercise
 
       # AD-13, contrôle (4) : la suite de scénarios, stations comprises, rejouée sans réseau,
       # sous-processus (git, vrais outils de la chaîne) compris. L'espace de noms est créé par
@@ -79,13 +79,13 @@ jobs:
       - name: Scénarios sans réseau (unshare -n)
         if: runner.os == 'Linux'
         env:
-          WDS_EXERCISE_UV: "1"
-          WDS_EXERCISE_DATA: ${{ runner.temp }}/wds-exercise
+          DEVSECOPS_DOJO_EXERCISE_UV: "1"
+          DEVSECOPS_DOJO_EXERCISE_DATA: ${{ runner.temp }}/wds-exercise
         run: >
           sudo unshare --net --
           sh -c 'ip link set lo up && exec "$@"' sh
           sudo -E -u "$(id -un)" env "PATH=$PATH" "HOME=$HOME"
-          "WDS_EXERCISE_UV=$WDS_EXERCISE_UV" "WDS_EXERCISE_DATA=$WDS_EXERCISE_DATA"
+          "DEVSECOPS_DOJO_EXERCISE_UV=$DEVSECOPS_DOJO_EXERCISE_UV" "DEVSECOPS_DOJO_EXERCISE_DATA=$DEVSECOPS_DOJO_EXERCISE_DATA"
           .venv/bin/python -m pytest -q --tb=short
           tests/test_scenarios.py tests/test_setup.py tests/test_fingerprints.py
           tests/test_exercise.py tests/test_terminal_tools.py tests/test_pipeline.py
@@ -124,13 +124,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Runner neuf, sans droits administrateur requis. WDS_INSTALL_FORCE_PROVISION_GIT=1 ignore
+      # Runner neuf, sans droits administrateur requis. DEVSECOPS_DOJO_INSTALL_FORCE_PROVISION_GIT=1 ignore
       # le git du runner pour exercer la voie pixi + conda-forge ; le clone cible la branche testée.
       - name: Installer avec install.sh (durée relevée)
         env:
-          WDS_DATA_DIR: ${{ runner.temp }}/wds-data
-          WDS_INSTALL_REF: ${{ github.head_ref || github.ref_name }}
-          WDS_INSTALL_FORCE_PROVISION_GIT: "1"
+          DEVSECOPS_DOJO_DATA_DIR: ${{ runner.temp }}/wds-data
+          DEVSECOPS_DOJO_INSTALL_REF: ${{ github.head_ref || github.ref_name }}
+          DEVSECOPS_DOJO_INSTALL_FORCE_PROVISION_GIT: "1"
         run: |
           start=$(date +%s)
           sh install.sh
@@ -138,27 +138,27 @@ jobs:
 
       - name: Vérifier l'installation
         env:
-          WDS_DATA_DIR: ${{ runner.temp }}/wds-data
+          DEVSECOPS_DOJO_DATA_DIR: ${{ runner.temp }}/wds-data
         run: |
-          cat "$WDS_DATA_DIR/install.json"
-          "$WDS_DATA_DIR/tools/bin/git" --version
-          "$WDS_DATA_DIR/tools/gitleaks/gitleaks" version
-          test -f "$WDS_DATA_DIR/app/pyproject.toml"
+          cat "$DEVSECOPS_DOJO_DATA_DIR/install.json"
+          "$DEVSECOPS_DOJO_DATA_DIR/tools/bin/git" --version
+          "$DEVSECOPS_DOJO_DATA_DIR/tools/gitleaks/gitleaks" version
+          test -f "$DEVSECOPS_DOJO_DATA_DIR/app/pyproject.toml"
 
       # Story 7.1 : la chaîne fonctionne réseau coupé depuis le uv-cache préchargé (sous Linux,
       # dans un espace de noms sans réseau ; l'espace est créé par root, le script tourne en runner).
       - name: Chaîne hors ligne (uv-cache, toolrun, diagnostic)
         env:
-          WDS_DATA_DIR: ${{ runner.temp }}/wds-data
+          DEVSECOPS_DOJO_DATA_DIR: ${{ runner.temp }}/wds-data
         run: |
           export PATH="$HOME/.local/bin:$PATH"
           set --
           if [ "$RUNNER_OS" = Linux ]; then
             # Le premier sudo vide l'environnement : les variables utiles sont repassées par env.
             set -- sudo unshare --net -- sudo -E -u "$(id -un)" \
-              env "PATH=$PATH" "HOME=$HOME" "WDS_DATA_DIR=$WDS_DATA_DIR"
+              env "PATH=$PATH" "HOME=$HOME" "DEVSECOPS_DOJO_DATA_DIR=$DEVSECOPS_DOJO_DATA_DIR"
           fi
-          "$@" "$WDS_DATA_DIR/app/.venv/bin/python" .github/scripts/verifier_hors_ligne.py
+          "$@" "$DEVSECOPS_DOJO_DATA_DIR/app/.venv/bin/python" .github/scripts/verifier_hors_ligne.py
 
   installeur-windows:
     name: install.ps1 réel (windows-latest)
@@ -170,8 +170,8 @@ jobs:
       - name: Installer avec install.ps1 (durée relevée)
         shell: powershell
         env:
-          WDS_DATA_DIR: ${{ runner.temp }}\wds-data
-          WDS_INSTALL_REF: ${{ github.head_ref || github.ref_name }}
+          DEVSECOPS_DOJO_DATA_DIR: ${{ runner.temp }}\wds-data
+          DEVSECOPS_DOJO_INSTALL_REF: ${{ github.head_ref || github.ref_name }}
         run: |
           $watch = [Diagnostics.Stopwatch]::StartNew()
           & .\install.ps1
@@ -181,9 +181,9 @@ jobs:
       - name: Chaîne hors ligne (uv-cache, toolrun, diagnostic)
         shell: bash
         env:
-          WDS_DATA_DIR: ${{ runner.temp }}\wds-data
+          DEVSECOPS_DOJO_DATA_DIR: ${{ runner.temp }}\wds-data
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          cat "$WDS_DATA_DIR/install.json"
-          "$WDS_DATA_DIR/tools/gitleaks/gitleaks.exe" version
-          "$WDS_DATA_DIR/app/.venv/Scripts/python.exe" .github/scripts/verifier_hors_ligne.py
+          cat "$DEVSECOPS_DOJO_DATA_DIR/install.json"
+          "$DEVSECOPS_DOJO_DATA_DIR/tools/gitleaks/gitleaks.exe" version
+          "$DEVSECOPS_DOJO_DATA_DIR/app/.venv/Scripts/python.exe" .github/scripts/verifier_hors_ligne.py

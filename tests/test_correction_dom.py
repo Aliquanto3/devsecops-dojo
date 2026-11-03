@@ -105,7 +105,11 @@ console.log(JSON.stringify({
 """,
     )
     assert out["before"] == {"ccc": [], "bbb": [], "aaa": []}
-    assert out["marks"] == {"ccc": ["≡ Accepté aussi"], "bbb": ["✗ Votre choix"], "aaa": ["✓ Attendu"]}
+    assert out["marks"] == {
+        "ccc": ["≡ Accepté aussi"],
+        "bbb": ["✗ Votre choix"],
+        "aaa": ["✓ Attendu"],
+    }
     assert out["wrong"] is True and out["right"] is True
     assert out["label"] == "Commit bbbbbbb — ✗ Votre choix"
     assert out["expectedLabel"] == "Commit aaaaaaa — ✓ Attendu"
@@ -124,12 +128,22 @@ answer(store2, correction(A, true));
 console.log(JSON.stringify({ first, second: marksOf(), summary: $(".correction-summary").textContent }));
 """,
     )
-    assert out["first"] == {"ccc": ["✓ Votre choix", "≡ Accepté aussi"], "bbb": [], "aaa": ["✓ Attendu"]}
-    assert out["second"] == {"ccc": ["≡ Accepté aussi"], "bbb": [], "aaa": ["✓ Votre choix", "✓ Attendu"]}
+    assert out["first"] == {
+        "ccc": ["✓ Votre choix", "≡ Accepté aussi"],
+        "bbb": [],
+        "aaa": ["✓ Attendu"],
+    }
+    assert out["second"] == {
+        "ccc": ["≡ Accepté aussi"],
+        "bbb": [],
+        "aaa": ["✓ Votre choix", "✓ Attendu"],
+    }
     assert out["summary"] == "Désignation juste."
 
 
-def test_le_panneau_liste_l_attendu_et_les_equivalents_avec_voir_dans_les_vues(tmp_path: Path) -> None:
+def test_le_panneau_liste_l_attendu_et_les_equivalents_avec_voir_dans_les_vues(
+    tmp_path: Path,
+) -> None:
     out = _js(
         tmp_path,
         """
@@ -152,7 +166,9 @@ console.log(JSON.stringify({
 """,
     )
     assert out["title"] == "Correction"
-    assert out["items"][0].startswith("✓ Attendu") and "aaaaaaa « Sujet aaaaaaa »" in out["items"][0]
+    assert (
+        out["items"][0].startswith("✓ Attendu") and "aaaaaaa « Sujet aaaaaaa »" in out["items"][0]
+    )
     assert out["items"][1].startswith("≡ Accepté aussi") and "ccccccc" in out["items"][1]
     assert out["see"] == ["voir dans les vues", "voir dans les vues"]
     assert out["seeIds"] == ["aaa", "ccc"] and out["selected"] == ["commit:" + "c" * 40]
@@ -160,7 +176,13 @@ console.log(JSON.stringify({
     assert "bbbbbbb « Sujet bbbbbbb »" in out["slot"]
     assert out["clear"] == 0 and out["validated"] is True
     # Ordre fixe : correction (titre, résumé, cases) puis explication.
-    assert out["order"] == ["step-explanation-title", "correction-summary", "answer-slot", "step-explanation-text", "notice-actions"]
+    assert out["order"] == [
+        "step-explanation-title",
+        "correction-summary",
+        "answer-slot",
+        "step-explanation-text",
+        "notice-actions",
+    ]
     assert out["designateBlock"] == 0
     assert out["actions"] == ["Continuer"]  # « Recommencer » est au pied du panneau (4.4)
     assert out["foot"] == ["Recommencer"]
@@ -186,7 +208,9 @@ console.log(JSON.stringify({
     assert len(out["explanation"]) == 1 and "écrasé la sauvegarde" in out["explanation"][0]
 
 
-def test_la_correction_revient_apres_un_rechargement_et_recommencer_la_retire(tmp_path: Path) -> None:
+def test_la_correction_revient_apres_un_rechargement_et_recommencer_la_retire(
+    tmp_path: Path,
+) -> None:
     out = _js(
         tmp_path,
         """
@@ -202,7 +226,11 @@ console.log(JSON.stringify({ marks, hasBlock, posts, after: marksOf(), blocks: $
   armed: $$(".designate-block").length }));
 """,
     )
-    assert out["marks"] == {"ccc": ["≡ Accepté aussi"], "bbb": ["✗ Votre choix"], "aaa": ["✓ Attendu"]}
+    assert out["marks"] == {
+        "ccc": ["≡ Accepté aussi"],
+        "bbb": ["✗ Votre choix"],
+        "aaa": ["✓ Attendu"],
+    }
     assert out["hasBlock"] == 1
     assert len(out["posts"]) == 1 and out["posts"][0][0].endswith("/restart")
     assert out["after"] == {"ccc": [], "bbb": [], "aaa": []} and out["blocks"] == 0

@@ -10,10 +10,10 @@ import pytest
 from test_catalogue import _resolve_without
 from test_catalogue_dom import CATALOGUE, NODE, _js
 
-from wavedevsecops import toolrun
-from wavedevsecops.config import Settings
-from wavedevsecops.scenarios.order import SOCLE_ORDER, STATION_ORDER, catalogue_rank
-from wavedevsecops.web.catalogue import catalogue_body
+from devsecops_dojo import toolrun
+from devsecops_dojo.config import Settings
+from devsecops_dojo.scenarios.order import SOCLE_ORDER, STATION_ORDER, catalogue_rank
+from devsecops_dojo.web.catalogue import catalogue_body
 
 
 def test_section_stations_rangee_par_station(tmp_path: Path, monkeypatch) -> None:
@@ -88,7 +88,15 @@ STATIONS = {
                     "title": "Trouver un défaut de lint",
                     "description": "Lancez ruff.",
                     "modes": [
-                        {"mode": "A", "track": "llm", "workspace_id": "llm.defaut-de-lint.A", "state": "in_progress", "state_text": "En cours", "detail_text": "1 indice", "available": True},
+                        {
+                            "mode": "A",
+                            "track": "llm",
+                            "workspace_id": "llm.defaut-de-lint.A",
+                            "state": "in_progress",
+                            "state_text": "En cours",
+                            "detail_text": "1 indice",
+                            "available": True,
+                        },
                     ],
                 },
                 {
@@ -97,8 +105,19 @@ STATIONS = {
                     "description": "Lancez pytest.",
                     "modes": [
                         {
-                            "mode": "A", "track": "llm", "workspace_id": "llm.test-casse.A", "state": "todo", "state_text": "À faire", "detail_text": "", "available": False,
-                            "unavailable": {"text": "⊘ Indisponible", "needs_text": "Nécessite pytest", "diagnostic_text": "Voir le diagnostic", "diagnostic_path": "/diagnostic"},
+                            "mode": "A",
+                            "track": "llm",
+                            "workspace_id": "llm.test-casse.A",
+                            "state": "todo",
+                            "state_text": "À faire",
+                            "detail_text": "",
+                            "available": False,
+                            "unavailable": {
+                                "text": "⊘ Indisponible",
+                                "needs_text": "Nécessite pytest",
+                                "diagnostic_text": "Voir le diagnostic",
+                                "diagnostic_path": "/diagnostic",
+                            },
                         }
                     ],
                 },
@@ -148,8 +167,8 @@ def test_scenarios_de_station_livres_figurent_dans_l_ordre_conseille() -> None:
     """Garde contre la dérive de `STATION_ORDER` (revue 9.3) : un scénario de station absent de
     la liste prendrait le rang des scénarios hors ordre du socle, avant les stations connues, et
     fausserait « Scénario suivant » et l'ordre du rapport."""
-    from wavedevsecops.scenarios.order import STATION_ORDER, STATIONS_SECTION
-    from wavedevsecops.web.catalogue import load_catalogue
+    from devsecops_dojo.scenarios.order import STATION_ORDER, STATIONS_SECTION
+    from devsecops_dojo.web.catalogue import load_catalogue
 
     content = Path(__file__).resolve().parents[1] / "content"
     stations = {
@@ -163,8 +182,20 @@ def test_scenarios_de_station_livres_figurent_dans_l_ordre_conseille() -> None:
 @pytest.mark.skipif(NODE is None, reason="Node absent : comportement JS non exécuté")
 def test_carte_de_station_reprendre_et_recommencer(tmp_path: Path) -> None:
     """Reprendre et Recommencer (Story 6.4) valent aussi pour une carte de station (revue 9.3)."""
-    resume = {"can_resume": True, "step_number": 2, "step_total": 4, "text": "Étape 2 sur 4", "button_text": "Reprendre"}
-    blocked = {"can_resume": False, "step_number": 0, "step_total": 4, "blocked_text": "Ce scénario ne peut pas reprendre là où vous l'aviez laissé.", "restart_text": "Recommencer"}
+    resume = {
+        "can_resume": True,
+        "step_number": 2,
+        "step_total": 4,
+        "text": "Étape 2 sur 4",
+        "button_text": "Reprendre",
+    }
+    blocked = {
+        "can_resume": False,
+        "step_number": 0,
+        "step_total": 4,
+        "blocked_text": "Ce scénario ne peut pas reprendre là où vous l'aviez laissé.",
+        "restart_text": "Recommencer",
+    }
     group = json.loads(json.dumps(STATIONS["groups"][0]))
     group["scenarios"][0]["modes"][0]["resume"] = resume
     group["scenarios"][1]["modes"][0].update(available=True, resume=blocked)
@@ -193,4 +224,7 @@ console.log(JSON.stringify({{ first, step, blockedButtons, opened }}));
     ]
     assert out["step"] == "Étape 2 sur 4"
     assert out["blockedButtons"] == [["Recommencer", "Recommencer Trouver un test cassé en mode A"]]
-    assert out["opened"] == [["defaut-de-lint", {"resume": True}], ["test-casse", {"restart": True}]]
+    assert out["opened"] == [
+        ["defaut-de-lint", {"resume": True}],
+        ["test-casse", {"restart": True}],
+    ]

@@ -16,8 +16,8 @@ def pytest_configure(config) -> None:
 @pytest.fixture(scope="session")
 def git_path() -> Path:
     """Vrai git du poste, résolu par le registre. Absent : test ignoré, sauf en CI (échec)."""
-    from wavedevsecops.config import Settings
-    from wavedevsecops.toolrun import resolve
+    from devsecops_dojo.config import Settings
+    from devsecops_dojo.toolrun import resolve
 
     status = resolve("git", Settings())
     if not status.ok or status.path is None:

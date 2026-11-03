@@ -14,7 +14,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
-PACKAGE = "wavedevsecops"
+PACKAGE = "devsecops_dojo"
 SRC = ROOT / "src" / PACKAGE
 STATIC = SRC / "web" / "static"
 
@@ -70,7 +70,7 @@ def iter_modules(src: Path = SRC, package: str = PACKAGE) -> Iterator[tuple[str,
 
 
 def component(module: str) -> str:
-    """`wavedevsecops.web.app` -> `web` ; le paquet racine -> chaîne vide."""
+    """`devsecops_dojo.web.app` -> `web` ; le paquet racine -> chaîne vide."""
     parts = module.split(".")
     return parts[1] if len(parts) > 1 else ""
 

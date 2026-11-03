@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Recette WaveDevSecOps v0.2.0</title>
+<title>Recette DevSecOps Dojo v0.2.0</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -224,7 +224,7 @@ section.group { margin-top: 2.4rem; display: grid; gap: 0.9rem; }
       why: "Le budget de 45 s se mesure sur votre poste de référence, pas en CI. En CI, le pipeline complet prend 4,21 s sur Ubuntu et 9,08 s sur macOS ; le test de CI n'alerte qu'au-delà de 90 s et n'échoue qu'au-delà de 180 s.",
       steps: [
         "Le poste de référence est l’EliteBook professionnel (16 Go de RAM). Fermez les applications lourdes (Teams, navigateur chargé) pour mesurer dans des conditions d’atelier. Installez la v0.2.0, ou faites <code>git pull</code> puis <code>uv sync</code> dans le dossier <code>app</code>.",
-        "Lancez <code>uv run wavedevsecops</code>. Le navigateur s'ouvre sur une adresse locale.",
+        "Lancez <code>uv run devsecops-dojo</code>. Le navigateur s'ouvre sur une adresse locale.",
         "Ouvrez un scénario de station qui passe par une PR avec pipeline, par exemple <code>couverture-sous-le-seuil</code> (parcours sans IA).",
         "Poussez et ouvrez la PR. Chronométrez du push jusqu'au dernier des 7 checks terminé : ruff, pytest, gitleaks, bandit, pip_audit, uv_lock, quality_gate.",
         "La vue Distant + PR affiche la durée de chaque check : notez-les si un job paraît lent.",
@@ -275,7 +275,7 @@ section.group { margin-top: 2.4rem; display: grid; gap: 0.9rem; }
 
     { id: "w16", group: "real", order: 8, title: "Windows sans droits administrateur, derrière un proxy", time: "≈ 20 min", story: "1.6",
       why: "Les runners de CI n'ont ni proxy d'entreprise ni compte restreint.",
-      steps: ["Sur un poste d'entreprise, lancez la commande PowerShell du README depuis une session non administrateur.", "Si le proxy bloque, réessayez avec <code>$env:HTTPS_PROXY</code> renseigné.", "Vérifiez que <code>uv run wavedevsecops</code> ouvre l'application."],
+      steps: ["Sur un poste d'entreprise, lancez la commande PowerShell du README depuis une session non administrateur.", "Si le proxy bloque, réessayez avec <code>$env:HTTPS_PROXY</code> renseigné.", "Vérifiez que <code>uv run devsecops-dojo</code> ouvre l'application."],
       where: "<b>À noter :</b> limites connues des notes v0.1.0 et v0.2.0." },
     { id: "u17", group: "real", order: 9, title: "macOS et Linux sur un poste personnel", time: "≈ 15 min", story: "1.7",
       why: "La CI couvre des images propres ; un poste personnel a déjà son propre git, son shell, son PATH.",

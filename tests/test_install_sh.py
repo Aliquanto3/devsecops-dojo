@@ -1,6 +1,6 @@
 """Installeur macOS et Linux (Story 1.7) : `install.sh` exécuté par `sh` POSIX.
 
-Aucun accès réseau ni installation réelle : le mode simulation (`WDS_INSTALL_SIMULATE=1`)
+Aucun accès réseau ni installation réelle : le mode simulation (`DEVSECOPS_DOJO_INSTALL_SIMULATE=1`)
 journalise les actions dans `<data>/install.simulation.log` et fabrique de faux artefacts.
 Ignorés sous Windows (la CI exécute ces tests sur ubuntu et macos). Le téléchargement réel,
 pixi, le proxy et l'absence de droits administrateur ne se vérifient que sur un poste réel.
@@ -18,8 +18,8 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops.config import Settings
-from wavedevsecops.registry import load_registry
+from devsecops_dojo.config import Settings
+from devsecops_dojo.registry import load_registry
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "install.sh"
@@ -31,11 +31,21 @@ pytestmark = pytest.mark.skipif(SH is None, reason="sh POSIX absent (Windows)")
 
 
 def _env(data: Path | None, **extra: str) -> dict[str, str]:
-    env = {k: v for k, v in os.environ.items() if not k.upper().startswith(("WDS_", "HTTPS_PROXY"))}
+    env = {
+        k: v
+        for k, v in os.environ.items()
+        if not k.upper().startswith(("DEVSECOPS_DOJO_", "HTTPS_PROXY"))
+    }
     env.pop("https_proxy", None)
     if data is not None:
-        env["WDS_DATA_DIR"] = str(data)
-    env.update({"WDS_INSTALL_SIMULATE": "1", "WDS_INSTALL_SIMULATE_OS": "Linux", **extra})
+        env["DEVSECOPS_DOJO_DATA_DIR"] = str(data)
+    env.update(
+        {
+            "DEVSECOPS_DOJO_INSTALL_SIMULATE": "1",
+            "DEVSECOPS_DOJO_INSTALL_SIMULATE_OS": "Linux",
+            **extra,
+        }
+    )
     return env
 
 
@@ -62,7 +72,7 @@ def _install(data: Path, **extra: str) -> subprocess.CompletedProcess[str]:
 
 def _lib(code: str, data: Path | None = None, **extra: str) -> str:
     """Évalue du code sh après chargement des fonctions de l'installeur."""
-    env = _env(data, WDS_INSTALL_LIBONLY="1", **extra)
+    env = _env(data, DEVSECOPS_DOJO_INSTALL_LIBONLY="1", **extra)
     out = _sh(["-c", f". '{SCRIPT}'; REGISTRY='{TOOLS}'; {code}"], env)
     assert out.returncode == 0, out.stderr
     return out.stdout.strip()
@@ -142,8 +152,8 @@ def test_dossier_de_donnees_comme_l_application(
         monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / xdg))
     elif xdg:
         monkeypatch.setenv("XDG_DATA_HOME", xdg)
-    env = {k: v for k, v in os.environ.items() if not k.upper().startswith("WDS_")}
-    env["WDS_INSTALL_LIBONLY"] = "1"
+    env = {k: v for k, v in os.environ.items() if not k.upper().startswith("DEVSECOPS_DOJO_")}
+    env["DEVSECOPS_DOJO_INSTALL_LIBONLY"] = "1"
     # Système réel (pas de simulation) : macOS lit ~/Library, Linux XDG_DATA_HOME ou ~/.local/share.
     out = _sh(
         ["-c", f". '{SCRIPT}'; detect_platform; get_data_dir; printf '%s' \"$DATA_DIR\""], env
@@ -158,11 +168,15 @@ def test_dossier_de_donnees_macos(tmp_path: Path) -> None:
         HOME=str(tmp_path),
         XDG_DATA_HOME="",
     )
-    assert out == f"{tmp_path}/Library/Application Support/WaveDevSecOps"
+    assert out == f"{tmp_path}/Library/Application Support/DevSecOpsDojo"
 
 
 def test_installation_simulee_avec_git_du_poste(tmp_path: Path) -> None:
-    out = _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0", WDS_INSTALL_SIMULATE_UV="0.13.1")
+    out = _install(
+        tmp_path,
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_UV="0.13.1",
+    )
     assert out.returncode == 0, out.stdout + out.stderr
     log = "\n".join(_log(tmp_path))
     assert "pixi" not in log and "uv-install" not in log
@@ -183,7 +197,7 @@ def test_installation_simulee_avec_git_du_poste(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize("host_git", ["none", "2.30.0"])
 def test_git_provisionne_par_pixi_si_absent_ou_trop_ancien(tmp_path: Path, host_git: str) -> None:
-    out = _install(tmp_path, WDS_INSTALL_SIMULATE_GIT=host_git)
+    out = _install(tmp_path, DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT=host_git)
     assert out.returncode == 0, out.stdout + out.stderr
     log = "\n".join(_log(tmp_path))
     assert "download https://github.com/prefix-dev/pixi/releases/download/v0.82.0/pixi-" in log
@@ -199,7 +213,7 @@ def test_git_provisionne_par_pixi_si_absent_ou_trop_ancien(tmp_path: Path, host_
 
 
 def test_git_provisionne_reutilise_a_la_relance(tmp_path: Path) -> None:
-    env = {"WDS_INSTALL_SIMULATE_GIT": "none"}
+    env = {"DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT": "none"}
     assert _install(tmp_path, **env).returncode == 0
     assert _install(tmp_path, **env).returncode == 0
     log = _log(tmp_path)
@@ -212,7 +226,11 @@ def test_git_provisionne_reutilise_a_la_relance(tmp_path: Path) -> None:
 
 
 def test_force_provision_ignore_le_git_du_poste(tmp_path: Path) -> None:
-    out = _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0", WDS_INSTALL_FORCE_PROVISION_GIT="1")
+    out = _install(
+        tmp_path,
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0",
+        DEVSECOPS_DOJO_INSTALL_FORCE_PROVISION_GIT="1",
+    )
     assert out.returncode == 0, out.stdout + out.stderr
     assert "pixi global install" in "\n".join(_log(tmp_path))
 
@@ -220,11 +238,11 @@ def test_force_provision_ignore_le_git_du_poste(tmp_path: Path) -> None:
 def test_macos_ne_lance_jamais_usr_bin_git_sans_xcode(tmp_path: Path) -> None:
     out = _install(
         tmp_path,
-        WDS_INSTALL_SIMULATE_OS="Darwin",
-        WDS_INSTALL_SIMULATE_ARCH="arm64",
-        WDS_INSTALL_SIMULATE_GIT="2.39.5",
-        WDS_INSTALL_SIMULATE_GIT_PATH="/usr/bin/git",
-        WDS_INSTALL_SIMULATE_XCODE="missing",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_OS="Darwin",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_ARCH="arm64",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.39.5",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT_PATH="/usr/bin/git",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_XCODE="missing",
     )
     assert out.returncode == 0, out.stdout + out.stderr
     log = _log(tmp_path)
@@ -239,10 +257,10 @@ def test_macos_ne_lance_jamais_usr_bin_git_sans_xcode(tmp_path: Path) -> None:
 def test_macos_utilise_usr_bin_git_si_xcode_present(tmp_path: Path) -> None:
     out = _install(
         tmp_path,
-        WDS_INSTALL_SIMULATE_OS="Darwin",
-        WDS_INSTALL_SIMULATE_GIT="2.39.5",
-        WDS_INSTALL_SIMULATE_GIT_PATH="/usr/bin/git",
-        WDS_INSTALL_SIMULATE_XCODE="ok",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_OS="Darwin",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.39.5",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT_PATH="/usr/bin/git",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_XCODE="ok",
     )
     assert out.returncode == 0, out.stdout + out.stderr
     log = _log(tmp_path)
@@ -253,14 +271,16 @@ def test_macos_utilise_usr_bin_git_si_xcode_present(tmp_path: Path) -> None:
 
 def test_linux_ne_teste_pas_xcode(tmp_path: Path) -> None:
     out = _install(
-        tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0", WDS_INSTALL_SIMULATE_GIT_PATH="/usr/bin/git"
+        tmp_path,
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT_PATH="/usr/bin/git",
     )
     assert out.returncode == 0, out.stdout + out.stderr
     assert "xcode-select -p" not in _log(tmp_path)
 
 
 def test_mise_a_jour_conserve_progress(tmp_path: Path) -> None:
-    env = {"WDS_INSTALL_SIMULATE_GIT": "2.43.0"}
+    env = {"DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT": "2.43.0"}
     assert _install(tmp_path, **env).returncode == 0
     first = _record(tmp_path)
     progress = tmp_path / "progress.json"
@@ -275,39 +295,49 @@ def test_mise_a_jour_conserve_progress(tmp_path: Path) -> None:
 
 
 def test_echec_telechargement_message_francais_et_reprise(tmp_path: Path) -> None:
-    out = _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="none", WDS_INSTALL_SIMULATE_FAIL="download")
+    out = _install(
+        tmp_path,
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="none",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL="download",
+    )
     assert out.returncode == 1
     text = out.stdout + out.stderr
     assert "Cause :" in text and "HTTPS_PROXY" in text and "UV_SYSTEM_CERTS" in text
     assert "clone" in text and "zip" in text and "Relancez" in text and "étape" in text
     assert not (tmp_path / "install.json").exists()
-    out = _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="none")
+    out = _install(tmp_path, DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="none")
     assert out.returncode == 0, out.stdout + out.stderr
     assert (tmp_path / "install.json").exists()
 
 
 def test_echec_pixi_puis_reprise(tmp_path: Path) -> None:
-    out = _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="none", WDS_INSTALL_SIMULATE_FAIL="pixi")
+    out = _install(
+        tmp_path,
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="none",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL="pixi",
+    )
     assert out.returncode == 1 and "pixi global install" in out.stderr
     assert not (tmp_path / "install.json").exists()
-    assert _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="none").returncode == 0
+    assert _install(tmp_path, DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="none").returncode == 0
 
 
 def test_somme_fausse_arrete_gitleaks(tmp_path: Path) -> None:
     out = _install(
-        tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0", WDS_INSTALL_SIMULATE_FAIL="checksum"
+        tmp_path,
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL="checksum",
     )
     assert out.returncode == 1
     assert "ne correspond pas" in out.stderr and "gitleaks" in out.stderr.lower()
     assert not (tmp_path / "install.json").exists()
     assert not (tmp_path / "tools" / "gitleaks").exists()
     assert not list((tmp_path / "cache" / "downloads").glob("gitleaks_*.tar.gz"))
-    assert _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0").returncode == 0
+    assert _install(tmp_path, DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0").returncode == 0
 
 
 def test_precharge_le_cache_uv_apres_le_sync(tmp_path: Path) -> None:
     # Story 7.1 (AD-12) : uv-cache préchargé après les dépendances, avant gitleaks.
-    assert _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0").returncode == 0
+    assert _install(tmp_path, DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0").returncode == 0
     log = _log(tmp_path)
     preload = log.index(f"uv-cache-preload {tmp_path / 'uv-cache'}")
     assert any(line.startswith("uv sync --frozen") for line in log[:preload])
@@ -315,15 +345,19 @@ def test_precharge_le_cache_uv_apres_le_sync(tmp_path: Path) -> None:
 
 
 def test_echec_du_prechargement_message_francais(tmp_path: Path) -> None:
-    out = _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0", WDS_INSTALL_SIMULATE_FAIL="preload")
+    out = _install(
+        tmp_path,
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0",
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL="preload",
+    )
     assert out.returncode == 1
     assert "préchargement du cache uv" in out.stderr and "HTTPS_PROXY" in out.stderr
     assert not (tmp_path / "install.json").exists()
 
 
 def test_reprise_apres_echec_partiel_du_sync(tmp_path: Path) -> None:
-    env = {"WDS_INSTALL_SIMULATE_GIT": "2.43.0"}
-    assert _install(tmp_path, WDS_INSTALL_SIMULATE_FAIL="sync", **env).returncode == 1
+    env = {"DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT": "2.43.0"}
+    assert _install(tmp_path, DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL="sync", **env).returncode == 1
     assert not (tmp_path / "install.json").exists()
     assert (tmp_path / "app" / ".git").exists()
     assert _install(tmp_path, **env).returncode == 0
@@ -333,7 +367,9 @@ def test_reprise_apres_echec_partiel_du_sync(tmp_path: Path) -> None:
 
 
 def test_voie_archive_sans_git(tmp_path: Path) -> None:
-    out = _install(tmp_path, WDS_INSTALL_METHOD="zip", WDS_INSTALL_SIMULATE_GIT="none")
+    out = _install(
+        tmp_path, DEVSECOPS_DOJO_INSTALL_METHOD="zip", DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="none"
+    )
     assert out.returncode == 0, out.stdout + out.stderr
     log = "\n".join(_log(tmp_path))
     assert "pixi" not in log and "zip-extract" in log and "archive/main.tar.gz" in log
@@ -346,9 +382,9 @@ def test_voie_archive_sans_git(tmp_path: Path) -> None:
 
 
 def test_voie_clone_remplace_une_archive_sans_la_perdre(tmp_path: Path) -> None:
-    env = {"WDS_INSTALL_SIMULATE_GIT": "2.43.0"}
-    assert _install(tmp_path, WDS_INSTALL_METHOD="zip", **env).returncode == 0
-    failed = _install(tmp_path, WDS_INSTALL_SIMULATE_FAIL="clone", **env)
+    env = {"DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT": "2.43.0"}
+    assert _install(tmp_path, DEVSECOPS_DOJO_INSTALL_METHOD="zip", **env).returncode == 0
+    failed = _install(tmp_path, DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL="clone", **env)
     assert failed.returncode == 1
     assert (tmp_path / "app" / "pyproject.toml").exists()  # l'archive reste en place
     assert _install(tmp_path, **env).returncode == 0
@@ -358,21 +394,23 @@ def test_voie_clone_remplace_une_archive_sans_la_perdre(tmp_path: Path) -> None:
 
 
 def test_methode_inconnue_refusee(tmp_path: Path) -> None:
-    out = _install(tmp_path, WDS_INSTALL_METHOD="ftp")
+    out = _install(tmp_path, DEVSECOPS_DOJO_INSTALL_METHOD="ftp")
     assert out.returncode == 1 and "clone et zip" in out.stderr
 
 
 def test_install_json_futur_non_modifie(tmp_path: Path) -> None:
     future = '{\n  "schema_version": 99\n}\n'
     (tmp_path / "install.json").write_text(future, "utf-8")
-    out = _install(tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0")
+    out = _install(tmp_path, DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0")
     assert out.returncode == 1 and "plus récente" in out.stderr
     assert (tmp_path / "install.json").read_text("utf-8") == future
 
 
 def test_proxy_pose_uv_system_certs(tmp_path: Path) -> None:
     out = _install(
-        tmp_path, WDS_INSTALL_SIMULATE_GIT="2.43.0", HTTPS_PROXY="http://proxy.invalid:8080"
+        tmp_path,
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0",
+        HTTPS_PROXY="http://proxy.invalid:8080",
     )
     assert out.returncode == 0, out.stdout + out.stderr
     assert "Proxy détecté" in out.stdout and "UV_SYSTEM_CERTS=true" in out.stdout
@@ -381,11 +419,11 @@ def test_proxy_pose_uv_system_certs(tmp_path: Path) -> None:
 @pytest.mark.skipif(CURL is None, reason="curl absent")
 def test_proxy_injoignable_fait_echouer_le_telechargement(tmp_path: Path) -> None:
     # Hors simulation : curl passe par le proxy (port fermé) et échoue sans toucher au réseau.
-    env = _env(tmp_path, HTTPS_PROXY="http://127.0.0.1:9", WDS_INSTALL_LIBONLY="1")
-    env.pop("WDS_INSTALL_SIMULATE")
+    env = _env(tmp_path, HTTPS_PROXY="http://127.0.0.1:9", DEVSECOPS_DOJO_INSTALL_LIBONLY="1")
+    env.pop("DEVSECOPS_DOJO_INSTALL_SIMULATE")
     code = (
         f". '{SCRIPT}'; CURRENT_STEP=essai; DATA_DIR='{tmp_path}'; init_network; "
-        "fetch https://github.com/Aliquanto3/wavedevsecops/raw/main/README.md "
+        "fetch https://github.com/Aliquanto3/devsecops-dojo/raw/main/README.md "
         f"'{tmp_path}/x/README.md'"
     )
     out = _sh(["-c", code], env)
@@ -402,7 +440,7 @@ def _readme_command() -> str:
     return lines[0]
 
 
-RAW = "https://raw.githubusercontent.com/Aliquanto3/wavedevsecops/main/install.sh"
+RAW = "https://raw.githubusercontent.com/Aliquanto3/devsecops-dojo/main/install.sh"
 
 
 def test_commande_du_readme_identique_a_l_entete() -> None:
@@ -414,13 +452,13 @@ def test_commande_du_readme_identique_a_l_entete() -> None:
 def test_voie_collee_installe_en_simulation(tmp_path: Path) -> None:
     # Commande du README telle quelle (script lu par un tube : $0 n'est pas un fichier), URL en file://.
     command = _readme_command().replace(RAW, SCRIPT.as_uri())
-    env = _env(tmp_path / "data", WDS_INSTALL_SIMULATE_TOOLS_TOML=str(TOOLS))
-    env["WDS_INSTALL_SIMULATE_GIT"] = "2.43.0"
+    env = _env(tmp_path / "data", DEVSECOPS_DOJO_INSTALL_SIMULATE_TOOLS_TOML=str(TOOLS))
+    env["DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT"] = "2.43.0"
     out = _sh(["-c", command], env, cwd=tmp_path)
     assert out.returncode == 0, out.stdout + out.stderr
     assert "Installation terminée" in out.stdout
     log = "\n".join(_log(tmp_path / "data"))
-    assert "raw.githubusercontent.com/Aliquanto3/wavedevsecops/main/tools.toml" in log
+    assert "raw.githubusercontent.com/Aliquanto3/devsecops-dojo/main/tools.toml" in log
     versions = _record(tmp_path / "data")["versions"]
     assert isinstance(versions, dict) and versions["git"] == "2.43.0"
 
@@ -428,8 +466,10 @@ def test_voie_collee_installe_en_simulation(tmp_path: Path) -> None:
 @pytest.mark.skipif(CURL is None, reason="curl absent")
 def test_voie_collee_echec_message_et_code(tmp_path: Path) -> None:
     command = _readme_command().replace(RAW, SCRIPT.as_uri())
-    env = _env(tmp_path / "data", WDS_INSTALL_SIMULATE_TOOLS_TOML=str(TOOLS))
-    env.update(WDS_INSTALL_SIMULATE_GIT="none", WDS_INSTALL_SIMULATE_FAIL="download")
+    env = _env(tmp_path / "data", DEVSECOPS_DOJO_INSTALL_SIMULATE_TOOLS_TOML=str(TOOLS))
+    env.update(
+        DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="none", DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL="download"
+    )
     out = _sh(["-c", command], env, cwd=tmp_path)
     assert out.returncode == 1
     assert "Cause :" in out.stderr and "Relancez" in out.stderr
@@ -441,6 +481,34 @@ def test_dossier_app_etranger_non_supprime(tmp_path: Path) -> None:
     foreign.parent.mkdir()
     foreign.write_text("à garder", "utf-8")
     for method in ("clone", "zip"):
-        out = _install(tmp_path, WDS_INSTALL_METHOD=method, WDS_INSTALL_SIMULATE_GIT="2.43.0")
+        out = _install(
+            tmp_path,
+            DEVSECOPS_DOJO_INSTALL_METHOD=method,
+            DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT="2.43.0",
+        )
         assert out.returncode == 1 and "ne contient pas l'application" in out.stderr
         assert foreign.read_text("utf-8") == "à garder"
+
+
+def test_migration_de_l_ancien_dossier_de_donnees(tmp_path: Path) -> None:
+    old = tmp_path / "WaveDevSecOps"
+    (old / "app").mkdir(parents=True)
+    (old / "progress.json").write_text("{}", encoding="utf-8")
+    (old / "app.lock").write_text("verrou", encoding="utf-8")
+    (old / "workspaces" / "w" / "cache" / "venv").mkdir(parents=True)
+    (old / "workspaces" / "w" / "cache" / "venv" / "pyvenv.cfg").write_text("home = /x\n", "utf-8")
+    (old / "workspaces" / "w" / "run.json").write_text("{}", encoding="utf-8")
+    new = tmp_path / "DevSecOpsDojo"
+    code = f"DATA_DIR='{new}'; migrate_legacy_data; migrate_legacy_data"
+    # Variable DEVSECOPS_DOJO_DATA_DIR absente de l'environnement : la migration est permise.
+    _lib(code, None)
+    assert (new / "progress.json").read_text(encoding="utf-8") == "{}"
+    assert not (new / "app").exists() and not (new / "app.lock").exists()
+    assert (new / "workspaces" / "w" / "run.json").is_file()
+    assert not (new / "workspaces" / "w" / "cache" / "venv").exists()
+    assert (old / "progress.json").exists() and (old / "app").is_dir()
+
+
+def test_ancienne_variable_d_installeur_en_repli(tmp_path: Path) -> None:
+    out = _lib("printf '%s' \"$DEVSECOPS_DOJO_INSTALL_REF\"", tmp_path, WDS_INSTALL_REF="v9.9.9")
+    assert out == "v9.9.9"

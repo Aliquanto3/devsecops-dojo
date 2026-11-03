@@ -23,9 +23,9 @@ from pathlib import Path
 import pytest
 import yaml
 
-from wavedevsecops import ci, github_sim, procs, terminal, toolrun
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import (
+from devsecops_dojo import ci, github_sim, procs, terminal, toolrun
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import (
     WorkspaceEngine,
     WorkspaceManager,
     build_operation,
@@ -33,13 +33,13 @@ from wavedevsecops.engine import (
     pipeline,
     pr_intents,
 )
-from wavedevsecops.engine.operations import OperationRefused
-from wavedevsecops.events import Envelope, Kind
-from wavedevsecops.gitio import Git
-from wavedevsecops.progress.facts import ProgressStore
-from wavedevsecops.projections import EXPLAIN_REFS
-from wavedevsecops.scenarios import load_scenario
-from wavedevsecops.scenarios.steps._base import BLANK
+from devsecops_dojo.engine.operations import OperationRefused
+from devsecops_dojo.events import Envelope, Kind
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.progress.facts import ProgressStore
+from devsecops_dojo.projections import EXPLAIN_REFS
+from devsecops_dojo.scenarios import load_scenario
+from devsecops_dojo.scenarios.steps._base import BLANK
 
 WAIT = 90.0
 IDS = ("check-en-echec", "pr-sans-revue", "push-direct-main")
@@ -251,8 +251,8 @@ def test_les_barrieres_de_la_station_2_sont_dans_la_chaine() -> None:
 
 
 def test_l_etape_du_refus_ne_se_valide_que_par_le_refus_de_la_bonne_branche() -> None:
-    from wavedevsecops.scenarios.steps._base import StepContext
-    from wavedevsecops.scenarios.steps.push_refused import REFUSED_KEY, Args, check
+    from devsecops_dojo.scenarios.steps._base import StepContext
+    from devsecops_dojo.scenarios.steps.push_refused import REFUSED_KEY, Args, check
 
     step = Args(
         step_id="refus",
@@ -272,8 +272,8 @@ def test_l_etape_du_refus_ne_se_valide_que_par_le_refus_de_la_bonne_branche() ->
 
 
 def test_pr_state_juge_les_checks_sur_les_sha_courants(tmp_path: Path) -> None:
-    from wavedevsecops.contracts.github import Check, PullRequest
-    from wavedevsecops.scenarios.steps.pr_state import _checks_match
+    from devsecops_dojo.contracts.github import Check, PullRequest
+    from devsecops_dojo.scenarios.steps.pr_state import _checks_match
 
     sha, other = "a" * 40, "b" * 40
     pr = PullRequest(
@@ -396,9 +396,7 @@ def test_pr_sans_revue_checks_verts_mais_merge_bloque_jusqu_a_la_revue(
     assert box.pr().state == "merged"
 
 
-def test_la_revue_ne_se_demande_pas_avant_les_checks_verts(
-    make_box, fakes: Fakes
-) -> None:
+def test_la_revue_ne_se_demande_pas_avant_les_checks_verts(make_box, fakes: Fakes) -> None:
     fakes.pytest_pause = 4.0
     box = make_box("pr-sans-revue", "no_ai")
     box.line("git push -u origin test-quantite")

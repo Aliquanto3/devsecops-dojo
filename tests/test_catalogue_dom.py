@@ -82,8 +82,24 @@ CATALOGUE = {
                     "title": "Add et commit",
                     "number": 1,
                     "modes": [
-                        {"mode": "A", "track": "llm", "workspace_id": "llm.add-commit.A", "state": "in_progress", "state_text": "En cours", "detail_text": "3 sur 4 du premier coup · 1 indice", "available": True},
-                        {"mode": "B", "track": "llm", "workspace_id": "llm.add-commit.B", "state": "todo", "state_text": "À faire", "detail_text": "", "available": True},
+                        {
+                            "mode": "A",
+                            "track": "llm",
+                            "workspace_id": "llm.add-commit.A",
+                            "state": "in_progress",
+                            "state_text": "En cours",
+                            "detail_text": "3 sur 4 du premier coup · 1 indice",
+                            "available": True,
+                        },
+                        {
+                            "mode": "B",
+                            "track": "llm",
+                            "workspace_id": "llm.add-commit.B",
+                            "state": "todo",
+                            "state_text": "À faire",
+                            "detail_text": "",
+                            "available": True,
+                        },
                     ],
                 },
                 {
@@ -92,8 +108,19 @@ CATALOGUE = {
                     "number": 2,
                     "modes": [
                         {
-                            "mode": "A", "track": "llm", "workspace_id": "llm.branche.A", "state": "todo", "state_text": "À faire", "detail_text": "", "available": False,
-                            "unavailable": {"text": "⊘ Indisponible", "needs_text": "Nécessite gitleaks", "diagnostic_text": "Voir le diagnostic", "diagnostic_path": "/diagnostic"},
+                            "mode": "A",
+                            "track": "llm",
+                            "workspace_id": "llm.branche.A",
+                            "state": "todo",
+                            "state_text": "À faire",
+                            "detail_text": "",
+                            "available": False,
+                            "unavailable": {
+                                "text": "⊘ Indisponible",
+                                "needs_text": "Nécessite gitleaks",
+                                "diagnostic_text": "Voir le diagnostic",
+                                "diagnostic_path": "/diagnostic",
+                            },
                         }
                     ],
                 },
