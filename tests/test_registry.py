@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from wavedevsecops.registry import (
+from devsecops_dojo.registry import (
     Tool,
     at_least,
     extract_version,

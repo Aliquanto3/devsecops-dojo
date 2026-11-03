@@ -16,11 +16,11 @@ from pathlib import Path
 import pytest
 from test_workspace_api import WS, Stream, _call, _conn, cookie, instance  # noqa: F401
 
-from wavedevsecops import cli, llmrun
-from wavedevsecops.engine import INTENTS, OperationRefused, list_snapshots
-from wavedevsecops.procs import Chunk
-from wavedevsecops.web import exercise
-from wavedevsecops.wsfs import Layout
+from devsecops_dojo import cli, llmrun
+from devsecops_dojo.engine import INTENTS, OperationRefused, list_snapshots
+from devsecops_dojo.procs import Chunk
+from devsecops_dojo.web import exercise
+from devsecops_dojo.wsfs import Layout
 
 PATH = f"/api/ws/{WS}/run_exercise_code"
 
@@ -77,7 +77,7 @@ def fake_run(monkeypatch: pytest.MonkeyPatch, instance: cli.Instance) -> list[di
 
 
 def test_intention_enregistree_et_catalogue() -> None:
-    from wavedevsecops.engine.intents import CATALOGUE
+    from devsecops_dojo.engine.intents import CATALOGUE
 
     exercise.register_exercise_intent()
     exercise.register_exercise_intent()  # idempotent

@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops.progress import FutureSchemaError, UnreadableDataError, ensure_progress
-from wavedevsecops.progress.facts import Fact, ProgressStore, derive
+from devsecops_dojo.progress import FutureSchemaError, UnreadableDataError, ensure_progress
+from devsecops_dojo.progress.facts import Fact, ProgressStore, derive
 
 TRACK, SCENARIO, MODE = "llm", "etapes", "A"
 
@@ -149,7 +149,7 @@ def test_arret_pendant_l_ecriture_laisse_le_fichier_precedent(
     store: ProgressStore, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Écriture interrompue avant le renommage : `progress.json` reste entier et lisible."""
-    import wavedevsecops.progress as progress_module
+    import devsecops_dojo.progress as progress_module
 
     store.submit([fact()])
     before = (store.data_dir / "progress.json").read_bytes()

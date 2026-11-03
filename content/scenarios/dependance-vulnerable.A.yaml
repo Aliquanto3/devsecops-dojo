@@ -158,7 +158,7 @@ steps:
     explanation_text: >-
       pip-audit est un outil d'analyse de composition logicielle (SCA) : il compare chaque
       dépendance épinglée du fichier `requirements.txt` à une base de vulnérabilités connues. Ici,
-      il n'interroge aucun site : la base est embarquée dans WaveDevSecOps et figée à la date
+      il n'interroge aucun site : la base est embarquée dans DevSecOps Dojo et figée à la date
       citée dans le détail du check. jinja2 3.1.2 y a plusieurs failles, toutes corrigées dans
       des versions plus récentes. Le check est obligatoire : tant qu'il échoue, la PR ne peut pas
       être mergée. Le check `uv_lock` échoue aussi : `pyproject.toml` demande 3.1.2 alors que le

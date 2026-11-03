@@ -26,7 +26,7 @@ Source : `_bmad-output/planning-artifacts/epics.md`, section « Story 1.4 ».
 
 ## Décisions
 
-- Le registre vit dans `wavedevsecops/registry.py` (importe seulement `config`), pour que `toolrun`, `diagnostic` et les scénarios le partagent sans dépendance croisée.
+- Le registre vit dans `devsecops_dojo/registry.py` (importe seulement `config`), pour que `toolrun`, `diagnostic` et les scénarios le partagent sans dépendance croisée.
 - `DiagnosticCheck` est dans `contracts`, le `kind` dans `events` ; l'enveloppe complète d'événements (`boot_id`, `seq`, …) reste à la Story qui construit le flux SSE.
 - Une sonde en échec ne bloque jamais le diagnostic : l'état `missing`/`too_old` porte la raison (délai dépassé, sortie illisible, fichier absent).
 - La langue de git se détecte par comparaison du message avec celui de `LC_ALL=C` : fiable sans analyser de texte français.

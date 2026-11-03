@@ -8,12 +8,12 @@ from pathlib import Path
 import pytest
 from test_terminal import Space, settings, space  # noqa: F401  (fixtures)
 
-from wavedevsecops import wsfs
-from wavedevsecops.config import Settings
-from wavedevsecops.events import Kind
-from wavedevsecops.terminal import TerminalLine, build_terminal_line, files
-from wavedevsecops.terminal.allowlist import get_allowlist
-from wavedevsecops.terminal.parse import FileCommand, Refused, parse_line
+from devsecops_dojo import wsfs
+from devsecops_dojo.config import Settings
+from devsecops_dojo.events import Kind
+from devsecops_dojo.terminal import TerminalLine, build_terminal_line, files
+from devsecops_dojo.terminal.allowlist import get_allowlist
+from devsecops_dojo.terminal.parse import FileCommand, Refused, parse_line
 
 ALLOW = get_allowlist(Settings())
 

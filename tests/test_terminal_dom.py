@@ -134,7 +134,11 @@ console.log(JSON.stringify({
 """,
     )
     assert [c["url"] for c in out["calls"]] == ["/api/ws/llm.bac-a-sable-libre.A/terminal_line"] * 3
-    assert [c["body"]["line"] for c in out["calls"]] == ["git status", "git log --oneline", "brouillon"]
+    assert [c["body"]["line"] for c in out["calls"]] == [
+        "git status",
+        "git log --oneline",
+        "brouillon",
+    ]
     assert all(c["method"] == "POST" for c in out["calls"])
     assert out["prevented"] is True
     assert out["up"] == ["git log --oneline", "git status", "git status"]
@@ -266,7 +270,7 @@ console.log(JSON.stringify({ refused }));
     )
     assert out["refused"] == [
         ["Le dépôt est dans l'état du quiz.", "alert"],
-        ["WaveDevSecOps ne répond pas. Rechargez la page.", "alert"],
+        ["DevSecOps Dojo ne répond pas. Rechargez la page.", "alert"],
     ]
 
 
@@ -325,8 +329,7 @@ console.log(JSON.stringify({{
 
 def test_le_front_ne_lit_pas_la_sortie_et_les_textes_viennent_du_serveur() -> None:
     js = (
-        Path(__file__).resolve().parent.parent
-        / "src/wavedevsecops/web/static/js/terminal.js"
+        Path(__file__).resolve().parent.parent / "src/devsecops_dojo/web/static/js/terminal.js"
     ).read_text(encoding="utf-8")
     # AD-2 : aucune analyse de la sortie (pas d'expression régulière sur `entry.text`).
     assert "entry.text.match" not in js and "entry.text.replace" not in js
@@ -373,7 +376,9 @@ console.log(JSON.stringify({
     assert (out["role"], out["label"], out["tabindex"]) == ("group", "Sortie de ruff", "0")
     assert out["elementId"] == "output:op1" and out["tag"] == "ruff"
     assert out["verbatim"] == "𝄞 src/a.py:3:8: F401 import inutile\nFound 1 error.\n"
-    assert out["links"] == [["src/a.py:3", "path:worktree:src/a.py"]]  # le passage hors bornes saute
+    assert out["links"] == [
+        ["src/a.py:3", "path:worktree:src/a.py"]
+    ]  # le passage hors bornes saute
     assert out["split"] == [
         {"text": "a"},
         {"text": "bc", "elementId": "x"},

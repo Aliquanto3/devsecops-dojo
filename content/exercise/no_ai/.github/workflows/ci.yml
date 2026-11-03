@@ -1,7 +1,7 @@
 # Pipeline du projet en GitHub Actions. Le même pipeline s'écrit dans « Jenkinsfile » (Jenkins)
 # et dans « .gitlab-ci.yml » (GitLab CI) : sept tâches, l'une après l'autre.
-# Les commentaires « wds:job » et « wds:end » encadrent chaque tâche : WaveDevSecOps s'en sert pour
-# surligner ses lignes. Ce fichier se lit, il ne s'exécute pas dans WaveDevSecOps.
+# Les commentaires « wds:job » et « wds:end » encadrent chaque tâche : DevSecOps Dojo s'en sert pour
+# surligner ses lignes. Ce fichier se lit, il ne s'exécute pas dans DevSecOps Dojo.
 name: CI
 
 on:
@@ -68,7 +68,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --frozen
-      # Dépendances épinglées de requirements.txt, sans résolution ; {osv_url} : adresse du point OSV (dans WaveDevSecOps : le point local, base figée).
+      # Dépendances épinglées de requirements.txt, sans résolution ; {osv_url} : adresse du point OSV (dans DevSecOps Dojo : le point local, base figée).
       - run: uv run pip-audit --vulnerability-service osv --osv-url '{osv_url}' --no-deps --disable-pip --progress-spinner off -r requirements.txt
   # wds:end
 

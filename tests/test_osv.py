@@ -15,8 +15,8 @@ from pathlib import Path
 import pytest
 from packaging.version import InvalidVersion, Version
 
-from wavedevsecops import cli, osv
-from wavedevsecops.config import Settings, project_root
+from devsecops_dojo import cli, osv
+from devsecops_dojo.config import Settings, project_root
 
 OSV_DIR = project_root() / "content" / "osv"
 EXERCISE = project_root() / "content" / "exercise"

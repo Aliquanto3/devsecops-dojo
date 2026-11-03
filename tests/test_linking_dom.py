@@ -22,9 +22,9 @@ from test_remote_dom import BLOCKED, _views
 from test_repo_dom import MINIDOM
 from test_shell_js import NODE, _run
 
-from wavedevsecops.config import Settings
-from wavedevsecops.projections.diff import parse_diff
-from wavedevsecops.web.glossary import glossary_body
+from devsecops_dojo.config import Settings
+from devsecops_dojo.projections.diff import parse_diff
+from devsecops_dojo.web.glossary import glossary_body
 
 pytestmark = pytest.mark.skipif(NODE is None, reason="Node absent : comportement JS non exécuté")
 
@@ -584,7 +584,12 @@ console.log(JSON.stringify({ cls, before, after, popovers: $$(".explain-popover"
 """,
     )
     assert out["cls"] == "glossary-term"
-    assert out["before"] == {"title": "Quality gate", "expanded": "false", "live": "polite", "detail": 0}
+    assert out["before"] == {
+        "title": "Quality gate",
+        "expanded": "false",
+        "live": "polite",
+        "detail": 0,
+    }
     assert out["after"]["expanded"] == "true"
     assert out["after"]["link"].startswith("La voir jouer : scénario ")
     assert out["popovers"] == 0 and out["focusOnTrigger"] is True

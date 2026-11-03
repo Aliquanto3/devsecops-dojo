@@ -15,15 +15,15 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import ci, github_sim, procs, toolrun
-from wavedevsecops.ci import findings as parsers
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts.github import Check, GithubState, PullRequest
-from wavedevsecops.engine import prepare_workspace
-from wavedevsecops.scenarios import load_scenario
-from wavedevsecops.scenarios.steps import pr_state
-from wavedevsecops.scenarios.steps._base import StepContext
-from wavedevsecops.wsfs import Layout
+from devsecops_dojo import ci, github_sim, procs, toolrun
+from devsecops_dojo.ci import findings as parsers
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts.github import Check, GithubState, PullRequest
+from devsecops_dojo.engine import prepare_workspace
+from devsecops_dojo.scenarios import load_scenario
+from devsecops_dojo.scenarios.steps import pr_state
+from devsecops_dojo.scenarios.steps._base import StepContext
+from devsecops_dojo.wsfs import Layout
 
 SCENARIO = Settings().scenarios_path() / "code-vulnerable.A.yaml"
 FILE = "src/inventory/alertes.py"

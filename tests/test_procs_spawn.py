@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import procs
+from devsecops_dojo import procs
 
 PYTHON = getattr(sys, "_base_executable", sys.executable)
 """Interpréteur réel : sous Windows, celui du venv est un lanceur qui ajoute un niveau."""

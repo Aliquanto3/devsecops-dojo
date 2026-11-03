@@ -14,21 +14,21 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import github_sim, terminal
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import (
+from devsecops_dojo import github_sim, terminal
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import (
     WorkspaceEngine,
     WorkspaceManager,
     build_operation,
     load_run,
     pr_intents,
 )
-from wavedevsecops.events import Envelope, Kind
-from wavedevsecops.gitio import Git
-from wavedevsecops.projections import EXPLAIN_REFS
-from wavedevsecops.scenarios import load_scenario, scenario_files
-from wavedevsecops.scenarios.order import SOCLE_ORDER
-from wavedevsecops.scenarios.steps._base import BLANK
+from devsecops_dojo.events import Envelope, Kind
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.projections import EXPLAIN_REFS
+from devsecops_dojo.scenarios import load_scenario, scenario_files
+from devsecops_dojo.scenarios.order import SOCLE_ORDER
+from devsecops_dojo.scenarios.steps._base import BLANK
 
 WAIT = 60.0
 IDS = SOCLE_ORDER
@@ -408,8 +408,8 @@ SOCLE_PLAN: dict[str, Plan] = {
 
 
 def test_pr_state_sans_espace_ou_sans_pr_ne_dit_rien() -> None:
-    from wavedevsecops.scenarios.steps import StepContext
-    from wavedevsecops.scenarios.steps.pr_state import Args, check
+    from devsecops_dojo.scenarios.steps import StepContext
+    from devsecops_dojo.scenarios.steps.pr_state import Args, check
 
     step = Args(
         step_id="ouvrir",

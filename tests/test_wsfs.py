@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import wsfs
-from wavedevsecops.contracts import element_id, parse_element_id
+from devsecops_dojo import wsfs
+from devsecops_dojo.contracts import element_id, parse_element_id
 
 
 @pytest.mark.parametrize(

@@ -11,17 +11,17 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import cli, wsfs
-from wavedevsecops.config import Settings
-from wavedevsecops.engine.fingerprint import fingerprint
-from wavedevsecops.engine.resume import check_resume
-from wavedevsecops.engine.runfile import load_run, save_run
-from wavedevsecops.engine.workspace import prepare_workspace
-from wavedevsecops.gitio import Git
-from wavedevsecops.progress.facts import RESTART_KIND, ProgressStore
-from wavedevsecops.scenarios import load_scenario
-from wavedevsecops.web.catalogue import catalogue_body
-from wavedevsecops.wsfs import Layout
+from devsecops_dojo import cli, wsfs
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine.fingerprint import fingerprint
+from devsecops_dojo.engine.resume import check_resume
+from devsecops_dojo.engine.runfile import load_run, save_run
+from devsecops_dojo.engine.workspace import prepare_workspace
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.progress.facts import RESTART_KIND, ProgressStore
+from devsecops_dojo.scenarios import load_scenario
+from devsecops_dojo.web.catalogue import catalogue_body
+from devsecops_dojo.wsfs import Layout
 
 SCENARIO = """\
 schema_version: 1

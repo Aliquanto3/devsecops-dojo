@@ -9,9 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import cli, diagnostic, toolrun
-from wavedevsecops.config import Settings, read_proxy_environment
-from wavedevsecops.diagnostic import build_report, check_proxy, console_lines, load_texts
+from devsecops_dojo import cli, diagnostic, toolrun
+from devsecops_dojo.config import Settings, read_proxy_environment
+from devsecops_dojo.diagnostic import build_report, check_proxy, console_lines, load_texts
 
 SETTINGS = Settings()
 TEXTS = load_texts(SETTINGS)

@@ -9,12 +9,12 @@ ad: [AD-1, AD-6, AD-12, AD-13, AD-19]
 
 # Story 6.6 : Exécuter, en option, le code d'exercice du parcours LLM
 
-Source : `_bmad-output/planning-artifacts/epics.md`, section « Story 6.6 ». Reprend le report de la story 7.1 (`llmrun` lance sans `WDS_NETGUARD`, avec les proxy de l'apprenant).
+Source : `_bmad-output/planning-artifacts/epics.md`, section « Story 6.6 ». Reprend le report de la story 7.1 (`llmrun` lance sans `DEVSECOPS_DOJO_NETGUARD`, avec les proxy de l'apprenant).
 
 ## Livré
 
 - **`llmrun`** (nouveau composant, seul autorisé à lancer un processus qui peut sortir sur le réseau) :
-  - `exercise_environment` : `toolrun.offline_environment` sans `WDS_NETGUARD`, variables de proxy de l'apprenant rétablies par `config.read_proxy_environment` (majuscules, plus minuscules hors Windows). `NO_PROXY` garde les exclusions de l'apprenant et ajoute `127.0.0.1,localhost` (Ollama local ne passe jamais par un proxy).
+  - `exercise_environment` : `toolrun.offline_environment` sans `DEVSECOPS_DOJO_NETGUARD`, variables de proxy de l'apprenant rétablies par `config.read_proxy_environment` (majuscules, plus minuscules hors Windows). `NO_PROXY` garde les exclusions de l'apprenant et ajoute `127.0.0.1,localhost` (Ollama local ne passe jamais par un proxy).
   - `start_exercise(layout, settings)` : `python -m inventory "<question>"` dans `cache/venv/`, cwd `repo/`, délai `Settings.llm_run_timeout_s` (180 s), par `toolrun.spawn_module` → `procs.spawn` (sortie au fil de l'eau, Job Object, arrêt d'arbre). Rend le `Handle` ; si le venv manque, il est créé hors ligne par `toolrun.sync_environment`. Rien de lancé : `ExerciseUnavailable`.
   - Environnement réduit (revue) : des variables héritées, seules `PASSED_VARIABLES` passent (système, `TEMP`, `HOME`, locale, certificats) ; jetons, clés d'API et `PYTHONPATH` ne sont pas transmis.
   - `llmrun` ne parle qu'à `toolrun` (spine) : il n'importe ni `procs` ni `subprocess`, ni aucune bibliothèque réseau (le code d'exercice, lui, tourne dans un autre processus).
@@ -58,7 +58,7 @@ Rebase sur `main` (6860667, après 4.3, 2.4, 4.1). Second avis (Haiku) repris un
 - MEDIUM, second avis : instantané non vérifié par empreinte. Confirmé. Corrigé : empreinte calculée sur la copie et contrôlée contre `fingerprint(layout, git)` (`expected`), `SnapshotError` sinon. Test : empreinte de l'instantané `exercise` = celle du setup.
 - MEDIUM, second avis : 780 s sans interruption possible. Confirmé (180 s d'exécution + 600 s de `uv sync`). Corrigé pour l'exécution (`procs.spawn`, `ctx.on_interrupt`). Reporté pour `uv sync` (voir Reports).
 - MEDIUM, second avis : processus orphelin à l'arrêt de l'application. Confirmé (`procs.run` bloquant, sans arrêt lié à la file). Corrigé : `request_stop` interrompt l'opération, donc l'arbre ; Job Object `KILL_ON_JOB_CLOSE` sous Windows.
-- MEDIUM, second avis : environnement complet transmis au processus qui peut appeler le réseau. Confirmé. Corrigé : `PASSED_VARIABLES` seulement (+ proxy, + variables des outils) ; test avec `GITHUB_TOKEN`, `PYTHONPATH` et une variable `WDS_*` non transmis.
+- MEDIUM, second avis : environnement complet transmis au processus qui peut appeler le réseau. Confirmé. Corrigé : `PASSED_VARIABLES` seulement (+ proxy, + variables des outils) ; test avec `GITHUB_TOKEN`, `PYTHONPATH` et une variable `DEVSECOPS_DOJO_*` non transmis.
 - MEDIUM, revue : `toolrun.run_module` lançait par `procs.run` (bloquant, sortie d'un bloc). Corrigé : `spawn_module` → `procs.spawn` (AD-1 : seul `procs` crée des processus, appelé par `toolrun`).
 - LOW, revue : code de sortie `None` au délai. Corrigé : 124 / 130 comme le terminal (2.4).
 - LOW, revue : lint d'étape (`_mentions`) aussi sur les textes ; avec les types d'étape fermés (4.x), un champ ajouté est déjà refusé par le schéma. Gardé (défense en profondeur) ; tests adaptés.

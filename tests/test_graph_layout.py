@@ -7,8 +7,8 @@ import random
 import time
 from collections.abc import Sequence
 
-from wavedevsecops.contracts import Commit
-from wavedevsecops.projections import Layout, place
+from devsecops_dojo.contracts import Commit
+from devsecops_dojo.projections import Layout, place
 
 
 def sha(name: str) -> str:

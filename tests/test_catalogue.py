@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import cli, toolrun
-from wavedevsecops.config import Settings
-from wavedevsecops.web.catalogue import chain_body
+from devsecops_dojo import cli, toolrun
+from devsecops_dojo.config import Settings
+from devsecops_dojo.web.catalogue import chain_body
 
 WAIT_S = 60.0
 
@@ -242,6 +242,6 @@ def test_chaine_invalide_journalisee_sans_bandeau(
     content.mkdir()
     (content / "chain.yaml").write_text(source.replace(old, new, 1), encoding="utf-8")
     settings = Settings(data_dir=tmp_path / "data", content_dir=content)
-    with caplog.at_level("WARNING", logger="wavedevsecops"):
+    with caplog.at_level("WARNING", logger="devsecops_dojo"):
         assert chain_body(1, settings) is None
     assert "contenu invalide" in caplog.text and expected in caplog.text

@@ -7,20 +7,20 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import github_sim
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts import element_id
-from wavedevsecops.contracts.github import (
+from devsecops_dojo import github_sim
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts import element_id
+from devsecops_dojo.contracts.github import (
     BranchProtection,
     Check,
     GithubState,
     PullRequest,
     Review,
 )
-from wavedevsecops.engine import fingerprint, prepare_workspace
-from wavedevsecops.gitio import Git
-from wavedevsecops.scenarios import LoadedScenario, parse_scenario
-from wavedevsecops.scenarios.context import PERSONAS
+from devsecops_dojo.engine import fingerprint, prepare_workspace
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.scenarios import LoadedScenario, parse_scenario
+from devsecops_dojo.scenarios.context import PERSONAS
 
 BASE = """\
 schema_version: 1
@@ -405,7 +405,7 @@ def test_revues_perimees_ecartees_si_la_protection_le_demande() -> None:
 def test_ops_refusent_job_id_invalide_ou_en_double() -> None:
     from pydantic import ValidationError
 
-    from wavedevsecops.scenarios.ops import open_pr, set_protection
+    from devsecops_dojo.scenarios.ops import open_pr, set_protection
 
     with pytest.raises(ValidationError):
         set_protection.Args(op="set_protection", required_checks=["build\n"])
@@ -432,7 +432,7 @@ def test_refresh_sans_github_json_n_ecrit_rien(settings: Settings, git_path: Pat
 def test_changement_externe_recalcule_les_pr(settings: Settings, git_path: Path) -> None:
     from types import SimpleNamespace
 
-    from wavedevsecops.engine.manager import github_refresher
+    from devsecops_dojo.engine.manager import github_refresher
 
     extra = """\
   - op: open_pr

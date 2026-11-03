@@ -7,10 +7,10 @@ import pytest
 from test_progress_engine import _reopen
 from test_steps import Box, make_box  # noqa: F401 - `make_box` est une fixture
 
-from wavedevsecops.engine import load_run, save_run
-from wavedevsecops.events import Kind
-from wavedevsecops.progress.facts import Fact, ScenarioProgress
-from wavedevsecops.progress.summary import build_summary, hints_text, score_text
+from devsecops_dojo.engine import load_run, save_run
+from devsecops_dojo.events import Kind
+from devsecops_dojo.progress.facts import Fact, ScenarioProgress
+from devsecops_dojo.progress.summary import build_summary, hints_text, score_text
 
 NEXT = """\
 schema_version: 1

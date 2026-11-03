@@ -1,7 +1,8 @@
 """Pose gitleaks (archive officielle, somme vérifiée par `checksums.txt`) dans `tools/gitleaks/`.
 
 Équivalent, pour la CI des tests (story 7.3), de ce que font les installeurs (story 7.1) : le
-test du vrai hook pre-commit lance le vrai gitleaks de `WDS_EXERCISE_DATA`. Seule étape réseau ;
+test du vrai hook pre-commit lance le vrai gitleaks de
+`DEVSECOPS_DOJO_EXERCISE_DATA`. Seule étape réseau ;
 les tests tournent ensuite hors ligne.
 
 Usage : python provisionner_gitleaks.py <dossier de données>

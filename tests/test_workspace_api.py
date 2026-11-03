@@ -11,9 +11,9 @@ from pathlib import Path
 import pytest
 from pydantic import BaseModel
 
-from wavedevsecops import cli
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import (
+from devsecops_dojo import cli
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import (
     Intent,
     OpContext,
     Operation,
@@ -22,7 +22,7 @@ from wavedevsecops.engine import (
     register_intent,
     unregister_intent,
 )
-from wavedevsecops.scenarios import load_scenario
+from devsecops_dojo.scenarios import load_scenario
 
 FREE = Path(__file__).resolve().parent.parent / "content" / "scenarios" / "bac-a-sable-libre.A.yaml"
 WS = "llm.bac-a-sable-libre.A"

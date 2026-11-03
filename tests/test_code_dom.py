@@ -15,7 +15,7 @@ import pytest
 from static_rules import STATIC
 from test_shell_js import NODE, _run
 
-from wavedevsecops.projections.diff import parse_diff
+from devsecops_dojo.projections.diff import parse_diff
 
 pytestmark = pytest.mark.skipif(NODE is None, reason="Node absent : comportement JS non exécuté")
 
@@ -295,7 +295,7 @@ def test_feuille_de_la_vue_code() -> None:
     for size in re.findall(r"font-size:\s*(\d+(?:\.\d+)?)px", css):
         assert float(size) >= 12
     assert "var(--diff-line-height)" in css
-    assert "var(--color-accent-soft)" in css and "var(--color-danger-soft)" in css
+    assert "var(--color-success-soft)" in css and "var(--color-danger-soft)" in css
 
 
 def test_aucune_url_externe_dans_le_composant_d_edition() -> None:

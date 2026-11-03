@@ -5,7 +5,7 @@ au SHA, résultats par la file, annulation, environnement du run, erreur de l'ou
 Les outils sont remplacés par de petits Python qui impriment la sortie voulue (comme
 `test_terminal_tools.py`) ; les vrais ruff, pytest et gitleaks tournent dans
 `test_vrais_outils_dans_le_pipeline` quand le cache uv des gabarits est préchargé
-(`WDS_EXERCISE_UV=1`, CI).
+(`DEVSECOPS_DOJO_EXERCISE_UV=1`, CI).
 """
 
 from __future__ import annotations
@@ -23,19 +23,19 @@ import pytest
 import yaml
 from test_procs_spawn import alive, wait_dead
 
-from wavedevsecops import ci, github_sim, procs, toolrun
-from wavedevsecops.ci import findings as parsers
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts.github import PullRequest
-from wavedevsecops.engine import WorkspaceEngine, WorkspaceManager, prepare_workspace
-from wavedevsecops.engine import pipeline as engine_pipeline
-from wavedevsecops.engine.intents import build_operation
-from wavedevsecops.engine.operations import Operation, OperationRefused, StaleOperation
-from wavedevsecops.events import Envelope, Kind
-from wavedevsecops.gitio import Git
-from wavedevsecops.registry import load_registry
-from wavedevsecops.scenarios import load_scenario
-from wavedevsecops.wsfs import Layout
+from devsecops_dojo import ci, github_sim, procs, toolrun
+from devsecops_dojo.ci import findings as parsers
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts.github import PullRequest
+from devsecops_dojo.engine import WorkspaceEngine, WorkspaceManager, prepare_workspace
+from devsecops_dojo.engine import pipeline as engine_pipeline
+from devsecops_dojo.engine.intents import build_operation
+from devsecops_dojo.engine.operations import Operation, OperationRefused, StaleOperation
+from devsecops_dojo.events import Envelope, Kind
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.registry import load_registry
+from devsecops_dojo.scenarios import load_scenario
+from devsecops_dojo.wsfs import Layout
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
@@ -57,6 +57,8 @@ PIPELINE_JOBS = [
     "uv_lock",
     "quality_gate",
 ]
+
+
 def test_le_pipeline_declare_ruff_pytest_gitleaks_avec_leur_contrat() -> None:
     pipeline = ci.load_pipeline(Settings())
     assert pipeline.job_ids == [
@@ -163,7 +165,7 @@ def test_resultat_d_un_ancien_sha_refuse_par_github_sim(tmp_path: Path) -> None:
 
 
 def _box_free_stale(tmp_path: Path) -> None:
-    from wavedevsecops.contracts.github import Check, GithubState
+    from devsecops_dojo.contracts.github import Check, GithubState
 
     layout = Layout(tmp_path / "ws")
     layout.root.mkdir()
@@ -781,13 +783,15 @@ def test_sans_pipeline_declare_aucun_run(
 
 
 # ------------------------------------------------------------------ vrais outils
-USE_TEMPLATE_LOCK = os.environ.get("WDS_EXERCISE_UV") == "1"
+USE_TEMPLATE_LOCK = os.environ.get("DEVSECOPS_DOJO_EXERCISE_UV") == "1"
 ALERT_S, LIMIT_S = 90.0, 180.0
 """Durée d'un run des jobs de l'Epic 7 sur le runner de CI : alerte, puis échec."""
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(not USE_TEMPLATE_LOCK, reason="WDS_EXERCISE_UV=1 : cache uv préchargé")
+@pytest.mark.skipif(
+    not USE_TEMPLATE_LOCK, reason="DEVSECOPS_DOJO_EXERCISE_UV=1 : cache uv préchargé"
+)
 def test_vrais_outils_dans_le_pipeline(tmp_path: Path, git_path: Path) -> None:
     """Vrais ruff, pytest et gitleaks sur une PR qui met à jour une dépendance du uv.lock :
     le check pytest voit la nouvelle version (environnement propre au run, AD-12)."""
@@ -807,7 +811,7 @@ def test_vrais_outils_dans_le_pipeline(tmp_path: Path, git_path: Path) -> None:
         {"op": "write_file", "path": "uv.lock", "content": (llm / "uv.lock").read_text("utf-8")},
         {"op": "write_file", "path": "tests/test_dependance.py", "content": httpx_test},
     ]
-    data = Path(os.environ["WDS_EXERCISE_DATA"])
+    data = Path(os.environ["DEVSECOPS_DOJO_EXERCISE_DATA"])
     settings = Settings(data_dir=data, content_dir=_content(tmp_path, scenario))
     opened = Box(settings, git_path)
     try:

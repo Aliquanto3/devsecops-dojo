@@ -12,9 +12,9 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import load_references, prepare_workspace, reference_key
-from wavedevsecops.scenarios import load_scenario, scenario_files
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import load_references, prepare_workspace, reference_key
+from devsecops_dojo.scenarios import load_scenario, scenario_files
 
 CASES = [
     (path, track)

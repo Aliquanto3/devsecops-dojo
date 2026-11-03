@@ -3,7 +3,7 @@ tirés d'une exécution machine, interruption, preuve `evidence_seen` (AD-4, AD-
 
 Les lancements d'outils sont remplacés par de petits sous-processus Python qui impriment la
 sortie voulue ; le vrai ruff et le vrai pytest tournent dans `test_vrais_outils_dans_le_terminal`
-quand l'environnement d'exercice est disponible (`WDS_EXERCISE_UV=1`, comme
+quand l'environnement d'exercice est disponible (`DEVSECOPS_DOJO_EXERCISE_UV=1`, comme
 `tests/test_exercise.py`).
 """
 
@@ -19,18 +19,18 @@ from pathlib import Path
 import pytest
 from test_procs_spawn import alive, wait_dead
 
-from wavedevsecops import procs, terminal, toolrun
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts import element_id
-from wavedevsecops.engine import WorkspaceEngine, WorkspaceManager, prepare_workspace
-from wavedevsecops.events import Envelope, Kind
-from wavedevsecops.progress.facts import ProgressStore
-from wavedevsecops.scenarios import load_scenario
-from wavedevsecops.terminal import TerminalLine, build_terminal_line, tools
-from wavedevsecops.terminal.allowlist import Allowlist, get_allowlist
-from wavedevsecops.terminal.parse import Refused, ToolCommand, parse_line
-from wavedevsecops.toolrun import findings as machine
-from wavedevsecops.wsfs import Layout
+from devsecops_dojo import procs, terminal, toolrun
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts import element_id
+from devsecops_dojo.engine import WorkspaceEngine, WorkspaceManager, prepare_workspace
+from devsecops_dojo.events import Envelope, Kind
+from devsecops_dojo.progress.facts import ProgressStore
+from devsecops_dojo.scenarios import load_scenario
+from devsecops_dojo.terminal import TerminalLine, build_terminal_line, tools
+from devsecops_dojo.terminal.allowlist import Allowlist, get_allowlist
+from devsecops_dojo.terminal.parse import Refused, ToolCommand, parse_line
+from devsecops_dojo.toolrun import findings as machine
+from devsecops_dojo.wsfs import Layout
 
 CONTENT = Path(__file__).resolve().parent.parent / "content" / "scenarios"
 LINT = CONTENT / "defaut-de-lint.A.yaml"
@@ -535,10 +535,12 @@ def test_secours_cree_l_environnement_et_s_arrete_sur_ctrl_c(
 
 
 # ------------------------------------------------------------------ vrais outils
-USE_TEMPLATE_LOCK = os.environ.get("WDS_EXERCISE_UV") == "1"
+USE_TEMPLATE_LOCK = os.environ.get("DEVSECOPS_DOJO_EXERCISE_UV") == "1"
 
 
-@pytest.mark.skipif(not USE_TEMPLATE_LOCK, reason="WDS_EXERCISE_UV=1 : environnement verrouillé")
+@pytest.mark.skipif(
+    not USE_TEMPLATE_LOCK, reason="DEVSECOPS_DOJO_EXERCISE_UV=1 : environnement verrouillé"
+)
 @pytest.mark.parametrize(
     ("scenario", "track", "line", "needle", "link", "barrier"),
     [
@@ -559,7 +561,7 @@ def test_vrais_outils_dans_le_terminal(
     barrier: str,
 ) -> None:
     # Le cache uv préchargé par l'installeur (hors ligne) est celui des vrais outils.
-    settings = Settings(data_dir=Path(os.environ["WDS_EXERCISE_DATA"]))
+    settings = Settings(data_dir=Path(os.environ["DEVSECOPS_DOJO_EXERCISE_DATA"]))
     box = Box(settings, git_path, scenario, track)
     try:
         _op, code, events = box.run(line)

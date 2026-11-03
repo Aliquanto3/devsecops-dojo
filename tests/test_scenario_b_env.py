@@ -13,20 +13,20 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import terminal
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import (
+from devsecops_dojo import terminal
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import (
     WorkspaceEngine,
     WorkspaceManager,
     build_operation,
     designation,
     load_run,
 )
-from wavedevsecops.events import Envelope, Kind
-from wavedevsecops.gitio import Git
-from wavedevsecops.projections import EXPLAIN_REFS
-from wavedevsecops.scenarios import load_scenario
-from wavedevsecops.scenarios.steps._base import BLANK
+from devsecops_dojo.events import Envelope, Kind
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.projections import EXPLAIN_REFS
+from devsecops_dojo.scenarios import load_scenario
+from devsecops_dojo.scenarios.steps._base import BLANK
 
 WAIT = 60.0
 TRACKS = ("llm", "no_ai")

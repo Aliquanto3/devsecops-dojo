@@ -18,8 +18,8 @@ from test_pipeline_files import NOTES, PIPELINE, _prepare
 from test_repo_dom import MINIDOM
 from test_shell_js import NODE, _run
 
-from wavedevsecops.projections import project
-from wavedevsecops.web.code import pipeline_view
+from devsecops_dojo.projections import project
+from devsecops_dojo.web.code import pipeline_view
 
 pytestmark = pytest.mark.skipif(NODE is None, reason="Node absent : comportement JS non exécuté")
 
@@ -347,5 +347,9 @@ console.log(JSON.stringify({ refs, triggers, explain: store.state.views.explain 
     checks = {k: v for k, v in out["explain"].items() if k.startswith(("check:", "output:check-"))}
     assert any(k.startswith("output:check-") for k in checks)
     for element, ref in checks.items():
-        job = element.split(":")[2] if element.startswith("check:") else element.split(":")[1].split("-")[2]
+        job = (
+            element.split(":")[2]
+            if element.startswith("check:")
+            else element.split(":")[1].split("-")[2]
+        )
         assert ref == (f"pipeline.{job}" if job in PIPELINE.job_ids else "remote.check"), element

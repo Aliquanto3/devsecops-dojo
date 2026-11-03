@@ -13,9 +13,9 @@ from pathlib import Path
 import pytest
 from test_steps import WAIT, Box, _kinds
 
-from wavedevsecops import cli
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import (
+from devsecops_dojo import cli
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import (
     InvalidIntent,
     Operation,
     OperationRefused,
@@ -26,11 +26,11 @@ from wavedevsecops.engine import (
     prepare_workspace,
     save_run,
 )
-from wavedevsecops.engine.designation import ALREADY_TEXT, NOT_DESIGNATION_TEXT, resolve_sha
-from wavedevsecops.events import Envelope, Kind
-from wavedevsecops.gitio import Git
-from wavedevsecops.progress.facts import ProgressStore
-from wavedevsecops.scenarios import ScenarioError, load_scenario, parse_scenario
+from devsecops_dojo.engine.designation import ALREADY_TEXT, NOT_DESIGNATION_TEXT, resolve_sha
+from devsecops_dojo.events import Envelope, Kind
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.progress.facts import ProgressStore
+from devsecops_dojo.scenarios import ScenarioError, load_scenario, parse_scenario
 
 ROOT = Path(__file__).resolve().parent.parent
 

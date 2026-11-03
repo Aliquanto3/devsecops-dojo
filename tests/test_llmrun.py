@@ -11,9 +11,9 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import llmrun, toolrun
-from wavedevsecops.config import Settings
-from wavedevsecops.wsfs import Layout
+from devsecops_dojo import llmrun, toolrun
+from devsecops_dojo.config import Settings
+from devsecops_dojo.wsfs import Layout
 
 PROXIES = {
     "HTTPS_PROXY": "http://proxy.example:3128",
@@ -81,14 +81,15 @@ def test_environnement_ne_transmet_que_le_necessaire(
 def test_lancement_reel_dans_un_sous_processus(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("WDS_SECRET_TEST", "x")
+    monkeypatch.setenv("DEVSECOPS_DOJO_SECRET_TEST", "x")
     layout = _fake_project(
         tmp_path,
         monkeypatch,
         "import json, os, sys\n"
-        "print(json.dumps({'argv': sys.argv[1:], 'guard': os.environ.get('WDS_NETGUARD'),"
+        "print(json.dumps({'argv': sys.argv[1:],"
+        " 'guard': os.environ.get('DEVSECOPS_DOJO_NETGUARD'),"
         " 'proxy': os.environ.get('HTTPS_PROXY'), 'cwd': os.getcwd(),"
-        " 'secret': os.environ.get('WDS_SECRET_TEST')}))\n",
+        " 'secret': os.environ.get('DEVSECOPS_DOJO_SECRET_TEST')}))\n",
     )
     handle = llmrun.start_exercise(layout, _settings(tmp_path), question="Salut", environ=PROXIES)
     out = _drain(handle)

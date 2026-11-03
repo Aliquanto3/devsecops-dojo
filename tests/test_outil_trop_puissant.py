@@ -17,19 +17,19 @@ import pytest
 import yaml
 from test_quality_gate import _commit, _run, osv_url, real_tools  # noqa: F401
 
-from wavedevsecops import ci, github_sim
-from wavedevsecops.ci import findings as parsers
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts.github import Check, Finding, GithubState, PullRequest
-from wavedevsecops.engine import prepare_workspace
-from wavedevsecops.engine.designation import correct
-from wavedevsecops.gitio import Git
-from wavedevsecops.projections import EXPLAIN_REFS
-from wavedevsecops.scenarios import load_scenario
-from wavedevsecops.scenarios.order import STATION_ORDER
-from wavedevsecops.scenarios.steps import pr_state
-from wavedevsecops.scenarios.steps._base import StepContext
-from wavedevsecops.wsfs import Layout
+from devsecops_dojo import ci, github_sim
+from devsecops_dojo.ci import findings as parsers
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts.github import Check, Finding, GithubState, PullRequest
+from devsecops_dojo.engine import prepare_workspace
+from devsecops_dojo.engine.designation import correct
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.projections import EXPLAIN_REFS
+from devsecops_dojo.scenarios import load_scenario
+from devsecops_dojo.scenarios.order import STATION_ORDER
+from devsecops_dojo.scenarios.steps import pr_state
+from devsecops_dojo.scenarios.steps._base import StepContext
+from devsecops_dojo.wsfs import Layout
 
 SETTINGS = Settings()
 SCENARIO = SETTINGS.scenarios_path() / "outil-trop-puissant.A.yaml"

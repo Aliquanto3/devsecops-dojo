@@ -12,18 +12,18 @@ import pytest
 from test_terminal import WAIT, Space
 from test_workspace_api import WS, _call, cookie, instance  # noqa: F401 - fixtures pytest
 
-from wavedevsecops import procs, terminal, wsfs
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts import AppError, parse_element_id
-from wavedevsecops.engine import (
+from devsecops_dojo import procs, terminal, wsfs
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts import AppError, parse_element_id
+from devsecops_dojo.engine import (
     OperationRefused,
     build_operation,
     code_intents,
     load_run,
     save_run,
 )
-from wavedevsecops.gitio import Git
-from wavedevsecops.projections.diff import DiffTargetError, parse_diff, read_diff
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.projections.diff import DiffTargetError, parse_diff, read_diff
 
 
 @pytest.fixture
@@ -297,7 +297,7 @@ def test_les_marqueurs_de_conflit_sont_signales() -> None:
 
 
 def test_un_diff_trop_long_est_coupe_et_le_dit(monkeypatch: pytest.MonkeyPatch) -> None:
-    from wavedevsecops.projections import diff
+    from devsecops_dojo.projections import diff
 
     monkeypatch.setattr(diff, "MAX_LINES", 3)
     body = "".join(f"+l{i}\n" for i in range(10))

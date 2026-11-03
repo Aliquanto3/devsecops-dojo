@@ -17,12 +17,12 @@ import pytest
 import yaml
 from static_rules import STATIC, static_url_violations
 
-from wavedevsecops import cli
-from wavedevsecops.config import Settings
-from wavedevsecops.web.shell import delivered_surfaces
+from devsecops_dojo import cli
+from devsecops_dojo.config import Settings
+from devsecops_dojo.web.shell import delivered_surfaces
 
 ROOT = Path(__file__).resolve().parent.parent
-DESIGN = ROOT / "_bmad-output/planning-artifacts/ux-designs/ux-wavedevsecops-2026-10-18/DESIGN.md"
+DESIGN = ROOT / "_bmad-output/planning-artifacts/ux-designs/ux-devsecops-dojo-2026-10-18/DESIGN.md"
 CSS = STATIC / "css"
 JS = STATIC / "js"
 
@@ -107,7 +107,7 @@ def test_vocabulaire_masque_en_v01_servi_en_v02(
     """Story 9.4 : la page Vocabulaire n'apparaît qu'au jalon v0.2 (passage fait par la 9.5)."""
     import functools
 
-    from wavedevsecops.web import create_app
+    from devsecops_dojo.web import create_app
 
     monkeypatch.setattr(cli, "create_app", functools.partial(create_app, milestone=milestone))
     inst = cli.start_instance(Settings(data_dir=tmp_path / "data"))
@@ -279,7 +279,7 @@ def test_menu_affichage_theme_et_mouvement() -> None:
 def test_bandeau_d_arret_et_point_de_vie() -> None:
     health = (JS / "health.js").read_text(encoding="utf-8")
     assert (
-        "WaveDevSecOps ne répond plus. Relancez-le ; votre progression est enregistrée." in health
+        "DevSecOps Dojo ne répond plus. Relancez-le ; votre progression est enregistrée." in health
     )
     assert "/api/health" in health
     main = (JS / "main.js").read_text(encoding="utf-8")
@@ -322,7 +322,11 @@ CONTRAST_PAIRS = (
     ("terminal-danger", "terminal-bg", 4.5),
     ("terminal-rule", "terminal-bg", 3),
     ("focus-on-ink", "terminal-bg", 3),
-    ("on-vivid", "danger", 4.5),
+    ("on-status", "danger", 4.5),
+    ("on-status", "state-active", 4.5),
+    ("on-status", "accent", 4.5),
+    ("on-status", "primary", 4.5),
+    ("on-vivid", "warning", 4.5),
     ("primary-deep", "primary-soft", 4.5),
     ("muted", "surface-raised", 3),
     ("danger", "surface-raised", 3),

@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import procs, toolrun
-from wavedevsecops.config import Settings
-from wavedevsecops.registry import load_registry
+from devsecops_dojo import procs, toolrun
+from devsecops_dojo.config import Settings
+from devsecops_dojo.registry import load_registry
 
 PY = Path(sys.executable)
 
@@ -203,7 +203,7 @@ def test_environnement_hors_ligne_story_7_1(
     assert not any(k.lower() in toolrun.PROXY_NAMES for k in env)
     assert env["no_proxy"] == "127.0.0.1,localhost" and env["UV_PYTHON_DOWNLOADS"] == "never"
     assert Path(env["UV_PYTHON_INSTALL_DIR"]) == tmp_path / "uv-cache" / "python"
-    assert env["WDS_NETGUARD"] == "1"
+    assert env["DEVSECOPS_DOJO_NETGUARD"] == "1"
     for name in ("RUFF_CACHE_DIR", "COVERAGE_FILE", "PRE_COMMIT_HOME"):
         assert Path(env[name]).parent == tmp_path / "cache"
 
@@ -288,10 +288,10 @@ def test_garde_reseau_du_venv(tmp_path: Path) -> None:
     script = tmp_path / "essai.py"
     script.write_text(toolrun.NETGUARD_SOURCE + _CONNECT, encoding="utf-8")
     env = toolrun.probe_environment()
-    env["WDS_NETGUARD"] = "1"
+    env["DEVSECOPS_DOJO_NETGUARD"] = "1"
     result = procs.run([PY, "-I", script], env=env, timeout=30)
     assert result.ok, result.stderr
-    assert "WaveDevSecOps" in result.stdout and "192.0.2.1" in result.stdout
+    assert "DevSecOps Dojo" in result.stdout and "192.0.2.1" in result.stdout
 
 
 _UDP_ET_DNS = """
@@ -312,7 +312,7 @@ def test_garde_reseau_refuse_udp_et_resolution(tmp_path: Path) -> None:
     script = tmp_path / "essai.py"
     script.write_text(toolrun.NETGUARD_SOURCE + _UDP_ET_DNS, encoding="utf-8")
     env = toolrun.probe_environment()
-    env["WDS_NETGUARD"] = "1"
+    env["DEVSECOPS_DOJO_NETGUARD"] = "1"
     result = procs.run([PY, "-I", script], env=env, timeout=30)
     assert result.ok, result.stderr
     assert result.stdout.split() == ["REFUSE", "REFUSE"]
@@ -339,7 +339,10 @@ def test_garde_reseau_refuse_udp_et_resolution(tmp_path: Path) -> None:
 )
 def test_garde_reseau_loopback_strict(event: str, args: tuple, permis: bool) -> None:
     namespace: dict[str, object] = {}
-    exec(toolrun.NETGUARD_SOURCE.replace('os.environ.get("WDS_NETGUARD")', "None"), namespace)
+    exec(
+        toolrun.NETGUARD_SOURCE.replace('os.environ.get("DEVSECOPS_DOJO_NETGUARD")', "None"),
+        namespace,
+    )
     hook = namespace["_wds_netguard"]
     if permis:
         hook(event, args)  # type: ignore[operator]

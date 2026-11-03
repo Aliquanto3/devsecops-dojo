@@ -15,7 +15,7 @@ Source : `_bmad-output/planning-artifacts/epics.md`, section « Story 9.5 ». Ty
 
 - `pyproject.toml` et `uv.lock` : `0.2.0` (`uv lock --offline`, `uv lock --check` vert) ; `tests/test_seed.py` aligné.
 - `CURRENT_MILESTONE = "v0.2"` (`web/shell.py`) : la page Vocabulaire est servie, `/fiche` (v0.3) reste 404. Tests réalignés : `test_surfaces_declarees_par_le_serveur`, `test_surface_non_livree_absente`. Stations 1 à 3 `delivered: true` dans `content/chain.yaml` (seule source), station 4 « Arrive en v0.3 » ; aucun texte « aperçu v0.2 » restant hors des notes de la v0.1.0 (historique).
-- `README.md` : bandeau et présentation v0.2.0, barrières, installation épinglée `WDS_INSTALL_REF=v0.2.0`, jalons.
+- `README.md` : bandeau et présentation v0.2.0, barrières, installation épinglée `DEVSECOPS_DOJO_INSTALL_REF=v0.2.0`, jalons.
 - `docs/releases/v0.2.0.md` : contenu, limites connues, durées CI du test de performance (alerte 90 s, échec 180 s), sections **à remplir par Anaël** (mesure des 45 s ; SM-9, tableau scénario × parcours).
 - CI, contrôle AD-13 n°4 : l'étape `unshare -n` ne couvrait aucun scénario de station. Ajoutés `test_scenarios_socle`, `test_stations_pr`, `test_pre_commit_hook`, `test_code_vulnerable`, `test_outil_trop_puissant`, puis en revue `test_blockers`, `test_dependance_vulnerable`, `test_quality_gate`, `test_llm_scenarios`. Plusieurs démarrent un serveur sur la boucle locale (point OSV local, fixture `osv_url`) : l'étape rallume `lo` dans l'espace de noms (`ip link set lo up`) avant de lancer les tests en runner. Toutes les stations 1 à 3 des deux parcours tournent ainsi réseau coupé, boucle locale seule.
 
@@ -32,10 +32,10 @@ Source : `_bmad-output/planning-artifacts/epics.md`, section « Story 9.5 ». Ty
    ```sh
    git switch main && git pull --ff-only
    gh run list --branch main --limit 1          # vert sur les trois OS
-   git tag -a v0.2.0 -m "WaveDevSecOps v0.2.0 : stations 1 à 3 de la chaîne DevSecOps, deux parcours, hors ligne"
+   git tag -a v0.2.0 -m "DevSecOps Dojo v0.2.0 : stations 1 à 3 de la chaîne DevSecOps, deux parcours, hors ligne"
    git push origin v0.2.0
-   gh release create v0.2.0 --verify-tag --title "WaveDevSecOps v0.2.0" --notes-file docs/releases/v0.2.0.md
-   curl -fsI https://raw.githubusercontent.com/Aliquanto3/wavedevsecops/v0.2.0/install.sh   # 200
+   gh release create v0.2.0 --verify-tag --title "DevSecOps Dojo v0.2.0" --notes-file docs/releases/v0.2.0.md
+   curl -fsI https://raw.githubusercontent.com/Aliquanto3/devsecops-dojo/v0.2.0/install.sh   # 200
    ```
 
    Topic : `status-test` est déjà posé, rien à changer.

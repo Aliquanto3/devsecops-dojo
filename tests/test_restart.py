@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import terminal, wsfs
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import (
+from devsecops_dojo import terminal, wsfs
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import (
     INTENTS,
     WorkspaceEngine,
     WorkspaceManager,
@@ -27,13 +27,13 @@ from wavedevsecops.engine import (
     snapshots,
     write_references,
 )
-from wavedevsecops.engine.operations import QUIZ_REFUSED_TEXT, RESTORE_FAILED_TEXT
-from wavedevsecops.engine.snapshots import pending_restore
-from wavedevsecops.engine.steps import CONTENT_CHANGED_TEXT
-from wavedevsecops.events import Envelope, Kind
-from wavedevsecops.gitio import Git
-from wavedevsecops.progress.facts import ProgressStore, derive
-from wavedevsecops.scenarios import load_scenario
+from devsecops_dojo.engine.operations import QUIZ_REFUSED_TEXT, RESTORE_FAILED_TEXT
+from devsecops_dojo.engine.snapshots import pending_restore
+from devsecops_dojo.engine.steps import CONTENT_CHANGED_TEXT
+from devsecops_dojo.events import Envelope, Kind
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.progress.facts import ProgressStore, derive
+from devsecops_dojo.scenarios import load_scenario
 
 WAIT = 60.0
 ALLOWLIST = Path(__file__).resolve().parent.parent / "content" / "terminal-allowlist.yaml"
@@ -426,9 +426,7 @@ def test_le_bilan_disparait_apres_recommencer_et_revient_identique(make_box) -> 
     events = box.run("restart")
 
     # Le front relit le panneau sur ce fait : il n'a plus de bilan et repart à l'étape 1.
-    assert [e.payload["facts"] for e in _of(events, Kind.PROGRESS_UPDATED)] == [
-        ["scenario_reset"]
-    ]
+    assert [e.payload["facts"] for e in _of(events, Kind.PROGRESS_UPDATED)] == [["scenario_reset"]]
     panel = box.panel()
     assert panel["summary"] is None and panel["current_step_id"] == "annuler"
     box.finish()
@@ -445,9 +443,12 @@ def test_sans_instantane_0_l_espace_est_reconstruit_et_compare_a_la_reference(ma
     events = box.run("restart")
     assert _of(events, Kind.APP_ERROR) == []
     assert box.panel()["current_step_id"] == "annuler"
-    assert box.fingerprint() == json.loads(
-        (box.settings.content_path() / "fingerprints.json").read_text(encoding="utf-8")
-    )["fingerprints"]["llm/reprise.A"]
+    assert (
+        box.fingerprint()
+        == json.loads(
+            (box.settings.content_path() / "fingerprints.json").read_text(encoding="utf-8")
+        )["fingerprints"]["llm/reprise.A"]
+    )
     assert box.run_json()["epoch"] == box.engine.epoch
 
 
@@ -516,7 +517,7 @@ def test_une_retouche_de_texte_ne_propose_rien(make_box) -> None:
 
 # ------------------------------------------------------------------------ l'intention
 def test_l_intention_restart_est_enregistree_par_l_application(tmp_path: Path) -> None:
-    from wavedevsecops.web.app import create_app  # noqa: PLC0415
+    from devsecops_dojo.web.app import create_app  # noqa: PLC0415
 
     INTENTS.pop("restart", None)
     create_app(port=0, token="t", settings=Settings(data_dir=tmp_path / "d"))

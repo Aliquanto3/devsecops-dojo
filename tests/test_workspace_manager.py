@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import (
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import (
     OpContext,
     Operation,
     OperationRefused,
@@ -21,9 +21,9 @@ from wavedevsecops.engine import (
     save_run,
     workspace_id_for,
 )
-from wavedevsecops.engine.watcher import TreeWatcher
-from wavedevsecops.events import Kind
-from wavedevsecops.wsfs import Layout
+from devsecops_dojo.engine.watcher import TreeWatcher
+from devsecops_dojo.events import Kind
+from devsecops_dojo.wsfs import Layout
 
 WAIT = 20.0
 IDS = ["llm.s1.A", "llm.s2.A", "no_ai.s1.A", "llm.s3.B"]

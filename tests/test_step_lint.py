@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 from test_scenarios import VALID, _errors
 
-from wavedevsecops.config import Settings
-from wavedevsecops.scenarios import load_scenario, scenario_files
+from devsecops_dojo.config import Settings
+from devsecops_dojo.scenarios import load_scenario, scenario_files
 
 
 @pytest.mark.parametrize(

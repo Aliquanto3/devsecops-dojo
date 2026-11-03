@@ -162,7 +162,9 @@ console.log(JSON.stringify({ withSummary, afterRestart, again: $(".score-summary
     assert out["reads"] == 3
 
 
-def test_le_bouton_du_bilan_et_l_encart_etat_inattendu_demandent_confirmation(tmp_path: Path) -> None:
+def test_le_bouton_du_bilan_et_l_encart_etat_inattendu_demandent_confirmation(
+    tmp_path: Path,
+) -> None:
     out = _js(
         tmp_path,
         """

@@ -9,10 +9,10 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import cli, toolrun
-from wavedevsecops.config import Settings
-from wavedevsecops.progress.facts import Fact, ProgressStore, ScenarioProgress
-from wavedevsecops.web.catalogue import PICKER_QUESTION, catalogue_body, detail_text
+from devsecops_dojo import cli, toolrun
+from devsecops_dojo.config import Settings
+from devsecops_dojo.progress.facts import Fact, ProgressStore, ScenarioProgress
+from devsecops_dojo.web.catalogue import PICKER_QUESTION, catalogue_body, detail_text
 
 TEMPLATE = """\
 schema_version: 1
@@ -228,8 +228,8 @@ def test_progress_illisible_rend_un_motif_et_non_une_erreur_nue(
 def test_scenarios_du_socle_livres_figurent_dans_l_ordre_conseille() -> None:
     """Garde contre la dérive de `SOCLE_ORDER` : un scénario du socle livré dans `content/`
     doit y être nommé (seul le bac à sable libre vient après, hors ordre)."""
-    from wavedevsecops.scenarios.order import SOCLE_ORDER, SOCLE_SECTION
-    from wavedevsecops.web.catalogue import load_catalogue
+    from devsecops_dojo.scenarios.order import SOCLE_ORDER, SOCLE_SECTION
+    from devsecops_dojo.web.catalogue import load_catalogue
 
     hors_ordre = {"bac-a-sable-libre"}
     content = Path(__file__).resolve().parents[1] / "content"

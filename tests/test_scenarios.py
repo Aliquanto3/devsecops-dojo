@@ -6,15 +6,15 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops.config import Settings
-from wavedevsecops.scenarios import (
+from devsecops_dojo.config import Settings
+from devsecops_dojo.scenarios import (
     REGISTRY,
     ScenarioError,
     load_scenario,
     parse_scenario,
     scenario_files,
 )
-from wavedevsecops.scenarios.ops import OpArgs
+from devsecops_dojo.scenarios.ops import OpArgs
 
 VALID = """\
 schema_version: 1

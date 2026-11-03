@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import diagnostic, gitio, procs, toolrun
-from wavedevsecops.config import Settings, read_proxy_environment
-from wavedevsecops.diagnostic import check_proxy, load_texts, mask_proxy
+from devsecops_dojo import diagnostic, gitio, procs, toolrun
+from devsecops_dojo.config import Settings, read_proxy_environment
+from devsecops_dojo.diagnostic import check_proxy, load_texts, mask_proxy
 
 GIT = shutil.which("git")
 
@@ -87,7 +87,7 @@ def test_langue_du_vrai_git() -> None:
 
 
 def test_diagnostic_sans_aucun_outil(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("wavedevsecops.toolrun.shutil.which", lambda name: None)
+    monkeypatch.setattr("devsecops_dojo.toolrun.shutil.which", lambda name: None)
     monkeypatch.delenv("UV", raising=False)
     monkeypatch.setenv("UV_INSTALL_DIR", str(tmp_path / "sans-uv"))
     checks = diagnostic.run_diagnostic(Settings(data_dir=tmp_path), environ={})

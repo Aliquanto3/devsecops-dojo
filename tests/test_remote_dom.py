@@ -21,12 +21,12 @@ from test_repo_dom import MINIDOM
 from test_shell_js import NODE, _run
 from test_shell_ui import _blocks, _palette, _ratio
 
-from wavedevsecops import github_sim
-from wavedevsecops.config import Settings
-from wavedevsecops.engine import prepare_workspace
-from wavedevsecops.gitio import Git
-from wavedevsecops.projections import project
-from wavedevsecops.scenarios import LoadedScenario, parse_scenario
+from devsecops_dojo import github_sim
+from devsecops_dojo.config import Settings
+from devsecops_dojo.engine import prepare_workspace
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.projections import project
+from devsecops_dojo.scenarios import LoadedScenario, parse_scenario
 
 pytestmark = pytest.mark.skipif(NODE is None, reason="Node absent : comportement JS non exécuté")
 
@@ -145,17 +145,42 @@ console.log(JSON.stringify({
 """,
     )
     assert out["problems"] == []
-    assert out["order"] == ["pr-head", "pr-branches", "pr-checks", "merge-zone", "pr-checks", "review-log"]
+    assert out["order"] == [
+        "pr-head",
+        "pr-branches",
+        "pr-checks",
+        "merge-zone",
+        "pr-checks",
+        "review-log",
+    ]
     assert out["title"] == "Change la valeur" and out["branches"] == "feature → main"
     assert out["failing"] == ["audit", "bandit"]
     assert out["others"] == ["build", "docs", "tests", "lint"]
-    assert out["states"] == ["Erreur de l'outil", "Échec", "En cours", "En attente", "En attente", "Réussi"]
+    assert out["states"] == [
+        "Erreur de l'outil",
+        "Échec",
+        "En cours",
+        "En attente",
+        "En attente",
+        "Réussi",
+    ]
     assert out["glyphs"] == ["⚠", "✗", "", "○", "○", "✓"]
     assert out["required"] == ["bandit", "tests"] and set(out["requiredLabel"]) == {"Obligatoire"}
-    assert out["animated"] == 1 and "pending-dot" in out["runningIsDot"]  # seul « En cours » est animé
-    assert out["classes"] == ["is-error", "is-failure", "is-running", "is-queued", "is-queued", "is-success"]
+    assert (
+        out["animated"] == 1 and "pending-dot" in out["runningIsDot"]
+    )  # seul « En cours » est animé
+    assert out["classes"] == [
+        "is-error",
+        "is-failure",
+        "is-running",
+        "is-queued",
+        "is-queued",
+        "is-success",
+    ]
     assert out["mergeDisabled"] == "true" and out["mergeReason"]
-    assert len(out["reasons"]) == 3 and "bandit" in out["reasons"][0] or "bandit" in out["reasons"][1]
+    assert (
+        len(out["reasons"]) == 3 and "bandit" in out["reasons"][0] or "bandit" in out["reasons"][1]
+    )
     assert out["counter"] == "Approbations : 1 sur 2 2 approbations requises"
     assert out["entries"] == ["Sacha Martin"] and out["badge"] == ["Collègue"]
     assert out["action"] == ["a approuvé"] and out["body"] == ["Bien vu."]
@@ -222,9 +247,7 @@ console.log(JSON.stringify({ blocked, state, posts }));
     assert out["posts"] == [{"url": "/api/ws/w/pr_merge", "body": {"number": 1}}]
 
 
-def test_ouvrir_une_pr_sur_une_branche_poussee_et_vue_vide(
-    tmp_path: Path, snapshots: dict
-) -> None:
+def test_ouvrir_une_pr_sur_une_branche_poussee_et_vue_vide(tmp_path: Path, snapshots: dict) -> None:
     out = _js(
         tmp_path,
         snapshots,
@@ -245,7 +268,11 @@ const none = { title: texts(".empty-title", remote()), refs: $$(".remote-refs").
 console.log(JSON.stringify({ empty, refs, labels, posts, none }));
 """,
     )
-    assert out["empty"] == {"title": ["Aucune PR."], "text": ["Poussez une branche, puis ouvrez une PR."], "cards": 0}
+    assert out["empty"] == {
+        "title": ["Aucune PR."],
+        "text": ["Poussez une branche, puis ouvrez une PR."],
+        "cards": 0,
+    }
     assert out["refs"] == ["origin/feature", "origin/main"]
     assert out["labels"] == [["Ouvrir une PR", "feature", "Ouvrir une PR pour origin/feature"]]
     assert out["posts"] == [{"url": "/api/ws/w/pr_open", "body": {"head": "feature"}}]
@@ -269,7 +296,10 @@ console.log(JSON.stringify({ merged, error: texts(".remote-error"), cards: $$(".
     assert out["merged"]["buttons"] == 0 and out["merged"]["openPr"] == 0
     assert out["merged"]["done"][0].startswith("Mergée dans main (")
     assert out["merged"]["state"] == ["Mergée"]
-    assert out["error"] == ["L'état du GitHub simulé est illisible. Recommencez."] and out["cards"] == 0
+    assert (
+        out["error"] == ["L'état du GitHub simulé est illisible. Recommencez."]
+        and out["cards"] == 0
+    )
 
 
 def test_type_d_element_non_declare_refuse_la_vue(tmp_path: Path, snapshots: dict) -> None:
@@ -291,7 +321,7 @@ console.log(JSON.stringify({ problems: store.state.problems.length, hasRemote: "
 # --- feuille de style : jetons seulement, contrastes des paires employées --------------------
 
 REMOTE_PAIRS = (
-    ("ink", "accent-soft", 4.5),  # pr-check réussi
+    ("ink", "success-soft", 4.5),  # pr-check réussi
     ("ink", "danger-soft", 4.5),  # pr-check en échec
     ("ink", "warning-soft", 4.5),  # pr-check erreur de l'outil, remote-error
     ("ink", "primary-soft", 4.5),  # pr-check en cours
@@ -324,7 +354,14 @@ def test_feuille_distante_sans_couleur_en_dur_ni_opacite() -> None:
     assert not re.search(r"#[0-9a-fA-F]{3,8}\b", css) and "opacity" not in css
     for size in re.findall(r"font-size:\s*(\d+(?:\.\d+)?)px", css):
         assert float(size) >= 12
-    for rule in (".pr-card", ".pr-check.is-success", ".pr-check.is-failure", ".pending-dot", ".merge-blocked", ".review-log"):
+    for rule in (
+        ".pr-card",
+        ".pr-check.is-success",
+        ".pr-check.is-failure",
+        ".pending-dot",
+        ".merge-blocked",
+        ".review-log",
+    ):
         assert rule in css, rule
     assert css.count("animation:") == 1  # seul « En cours » est animé
 
@@ -369,12 +406,26 @@ def _pipeline_snaps(snapshots: dict) -> dict:
         if check["job_id"] == "bandit":  # échec : sortie, fichier:ligne lié
             check["output_text"] = "agent/tools.py:27:1: B602 shell=True\n1 issue\n"
             check["output_spans"] = [
-                {"start": 0, "end": 14, "text": "agent/tools.py", "element_id": "path:worktree:agent/tools.py"}
+                {
+                    "start": 0,
+                    "end": 14,
+                    "text": "agent/tools.py",
+                    "element_id": "path:worktree:agent/tools.py",
+                }
             ]
             check["details"] = [
-                {"rule_id": "B602", "message_text": "shell=True", "location_text": "agent/tools.py:27",
-                 "link": "path:worktree:agent/tools.py"},
-                {"rule_id": "B101", "message_text": "assert", "location_text": "hors/bac.py:3", "link": ""},
+                {
+                    "rule_id": "B602",
+                    "message_text": "shell=True",
+                    "location_text": "agent/tools.py:27",
+                    "link": "path:worktree:agent/tools.py",
+                },
+                {
+                    "rule_id": "B101",
+                    "message_text": "assert",
+                    "location_text": "hors/bac.py:3",
+                    "link": "",
+                },
             ]
             check["output_element_id"] = "output:check-1-bandit-x"
         if check["job_id"] == "audit":  # erreur de l'outil : texte, Relancer
@@ -445,7 +496,10 @@ console.log(JSON.stringify({ before, opened, linked, designated, kept, after: $$
     assert before["plain"] == ["hors/bac.py:3"] and before["rules"] == ["B602", "B101"]
     assert before["declared"] == 0  # un check sans sortie n'a pas de « Voir la sortie »
     opened = out["opened"]
-    assert opened["label"] == "bandit" and opened["text"] == "agent/tools.py:27:1: B602 shell=True\n1 issue\n"
+    assert (
+        opened["label"] == "bandit"
+        and opened["text"] == "agent/tools.py:27:1: B602 shell=True\n1 issue\n"
+    )
     assert opened["link"] == "path:worktree:agent/tools.py"
     assert opened["expanded"] == "true" and opened["toggle"] == "Masquer la sortie"
     assert opened["roving"] and opened["focus"].startswith("toggle:check:1:bandit:")

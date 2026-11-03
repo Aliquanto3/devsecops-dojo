@@ -1,8 +1,8 @@
 #!/bin/sh
-# Installeur de WaveDevSecOps pour macOS et Linux, sans droits administrateur (AD-15, AD-20).
+# Installeur de DevSecOps Dojo pour macOS et Linux, sans droits administrateur (AD-15, AD-20).
 #
 # Commande unique (voir le README) :
-#   curl -fsSL https://raw.githubusercontent.com/Aliquanto3/wavedevsecops/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/Aliquanto3/devsecops-dojo/main/install.sh | sh
 #
 # curl respecte HTTPS_PROXY (et NO_PROXY) : le script, l'installeur de uv, pixi, git et les
 # archives passent tous par le proxy posé. Aucun sudo : tout est écrit dans le profil de
@@ -11,32 +11,45 @@
 # ligne : un téléchargement tronqué n'exécute rien.
 #
 # Réglages (variables d'environnement, toutes facultatives) :
-#   WDS_DATA_DIR        dossier des données (défaut : comme l'application, voir get_data_dir)
-#   WDS_INSTALL_METHOD  clone (défaut) ou zip (archive tar.gz de GitHub, sans git)
-#   WDS_INSTALL_REF     branche ou étiquette à installer (défaut main)
+#   DEVSECOPS_DOJO_DATA_DIR        dossier des données (défaut : comme l'application, voir get_data_dir)
+#   DEVSECOPS_DOJO_INSTALL_METHOD  clone (défaut) ou zip (archive tar.gz de GitHub, sans git)
+#   DEVSECOPS_DOJO_INSTALL_REF     branche ou étiquette à installer (défaut main)
 #   HTTPS_PROXY         proxy d'entreprise ; pose aussi UV_SYSTEM_CERTS=true
 #   UV_INSTALL_DIR      dossier de uv (défaut ~/.local/bin)
-#   WDS_INSTALL_FORCE_PROVISION_GIT=1  ignore le git du poste (CI : exerce la voie pixi)
+#   DEVSECOPS_DOJO_INSTALL_FORCE_PROVISION_GIT=1  ignore le git du poste (CI : exerce la voie pixi)
 # Réglages de test (aucun accès réseau, aucune installation réelle) :
-#   WDS_INSTALL_SIMULATE=1, WDS_INSTALL_SIMULATE_GIT=<version|none>, WDS_INSTALL_SIMULATE_GIT_PATH=<chemin>,
-#   WDS_INSTALL_SIMULATE_UV=<version|none>, WDS_INSTALL_SIMULATE_OS=<Darwin|Linux>,
-#   WDS_INSTALL_SIMULATE_ARCH=<uname -m>, WDS_INSTALL_SIMULATE_XCODE=<ok|missing>,
-#   WDS_INSTALL_SIMULATE_TOOLS_TOML=<fichier>,
-#   WDS_INSTALL_SIMULATE_FAIL=<étapes séparées par des virgules : download, pixi, clone, sync, preload, checksum>,
-#   WDS_INSTALL_LIBONLY=1 (définit les fonctions sans rien lancer).
+#   DEVSECOPS_DOJO_INSTALL_SIMULATE=1, DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT=<version|none>, DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT_PATH=<chemin>,
+#   DEVSECOPS_DOJO_INSTALL_SIMULATE_UV=<version|none>, DEVSECOPS_DOJO_INSTALL_SIMULATE_OS=<Darwin|Linux>,
+#   DEVSECOPS_DOJO_INSTALL_SIMULATE_ARCH=<uname -m>, DEVSECOPS_DOJO_INSTALL_SIMULATE_XCODE=<ok|missing>,
+#   DEVSECOPS_DOJO_INSTALL_SIMULATE_TOOLS_TOML=<fichier>,
+#   DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL=<étapes séparées par des virgules : download, pixi, clone, sync, preload, checksum>,
+#   DEVSECOPS_DOJO_INSTALL_LIBONLY=1 (définit les fonctions sans rien lancer).
 
 INSTALLER_VERSION=1
-REPO_URL='https://github.com/Aliquanto3/wavedevsecops.git'
-ARCHIVE_URL_BASE='https://github.com/Aliquanto3/wavedevsecops/archive'
-RAW_URL_BASE='https://raw.githubusercontent.com/Aliquanto3/wavedevsecops'
+
+# Compatibilité (ancien nom du projet) : les variables WDS_* restent lues quand la variable
+# DEVSECOPS_DOJO_* correspondante est absente, avec un avertissement sur stderr.
+for _n in DATA_DIR INSTALL_METHOD INSTALL_REF INSTALL_FORCE_PROVISION_GIT; do
+    eval "_old=\${WDS_$_n:-}"
+    eval "_new=\${DEVSECOPS_DOJO_$_n:-}"
+    if [ -z "$_new" ] && [ -n "$_old" ]; then
+        printf 'Avertissement : la variable WDS_%s est dépréciée, utilisez DEVSECOPS_DOJO_%s.
+' "$_n" "$_n" >&2
+        eval "DEVSECOPS_DOJO_$_n=\$_old"
+        export "DEVSECOPS_DOJO_$_n"
+    fi
+done
+REPO_URL='https://github.com/Aliquanto3/devsecops-dojo.git'
+ARCHIVE_URL_BASE='https://github.com/Aliquanto3/devsecops-dojo/archive'
+RAW_URL_BASE='https://raw.githubusercontent.com/Aliquanto3/devsecops-dojo'
 SIMULATE=0
-[ "${WDS_INSTALL_SIMULATE:-}" = 1 ] && SIMULATE=1
+[ "${DEVSECOPS_DOJO_INSTALL_SIMULATE:-}" = 1 ] && SIMULATE=1
 CURRENT_STEP=''
 PROXY=''
 SIMLOG=''
 
 NETWORK_SETTINGS="HTTPS_PROXY (par exemple http://proxy.entreprise:8080) ; NO_PROXY=127.0.0.1,localhost ; UV_SYSTEM_CERTS=true (certificats de l'entreprise)"
-ROUTE_TEXT="par clone (WDS_INSTALL_METHOD=clone, il faut git) ou par archive (export WDS_INSTALL_METHOD=zip), sans git. À défaut, téléchargez l'archive de l'application depuis GitHub, décompressez-la dans le dossier « app » du dossier de données, puis lancez « uv sync » dedans."
+ROUTE_TEXT="par clone (DEVSECOPS_DOJO_INSTALL_METHOD=clone, il faut git) ou par archive (export DEVSECOPS_DOJO_INSTALL_METHOD=zip), sans git. À défaut, téléchargez l'archive de l'application depuis GitHub, décompressez-la dans le dossier « app » du dossier de données, puis lancez « uv sync » dedans."
 
 # --- Messages -----------------------------------------------------------------------------
 
@@ -141,26 +154,50 @@ json_field() {
 
 # get_data_dir : pose DATA_DIR, comme resolved_data_dir() de l'application (platformdirs).
 get_data_dir() {
-    _wd=$(trim "${WDS_DATA_DIR:-}")
+    _wd=$(trim "${DEVSECOPS_DOJO_DATA_DIR:-}")
     if [ -n "$_wd" ]; then
         DATA_DIR=$_wd
         return
     fi
     if [ -z "${HOME:-}" ]; then
-        fail 'la variable HOME est vide : le profil de l utilisateur est introuvable.' 'WDS_DATA_DIR (dossier des données)' ''
+        fail 'la variable HOME est vide : le profil de l utilisateur est introuvable.' 'DEVSECOPS_DOJO_DATA_DIR (dossier des données)' ''
     fi
     # platformdirs lit XDG_DATA_HOME sous Linux comme sous macOS, et l'ignore s'il n'est pas absolu.
     _xdg=$(trim "${XDG_DATA_HOME:-}")
     case $_xdg in
-        /*) DATA_DIR="$_xdg/WaveDevSecOps" ;;
+        /*) DATA_DIR="$_xdg/DevSecOpsDojo" ;;
         *)
             if [ "$OS_NAME" = macos ]; then
-                DATA_DIR="$HOME/Library/Application Support/WaveDevSecOps"
+                DATA_DIR="$HOME/Library/Application Support/DevSecOpsDojo"
             else
-                DATA_DIR="$HOME/.local/share/WaveDevSecOps"
+                DATA_DIR="$HOME/.local/share/DevSecOpsDojo"
             fi
             ;;
     esac
+}
+
+# migrate_legacy_data : copie l'ancien dossier de données (nom « WaveDevSecOps ») vers DATA_DIR
+# si celui-ci n'existe pas encore et si l'utilisateur n'a pas choisi son dossier. Sans le
+# sous-dossier app/ (réinstallé). Jamais bloquant, jamais de suppression de l'ancien dossier.
+migrate_legacy_data() {
+    [ -z "$(trim "${DEVSECOPS_DOJO_DATA_DIR:-}")" ] || return 0
+    _old=$(printf '%s' "$DATA_DIR" | sed 's#/DevSecOpsDojo$#/WaveDevSecOps#')
+    [ "$_old" != "$DATA_DIR" ] || return 0
+    [ -d "$_old" ] || return 0
+    [ ! -e "$DATA_DIR" ] || return 0
+    _stage="$DATA_DIR.migration-$$"
+    rm -rf "$_stage" 2>/dev/null
+    if mkdir -p "$_stage" 2>/dev/null         && (cd "$_old" && for _e in .[!.]* *; do
+            [ -e "$_e" ] || continue
+            [ "$_e" = app ] && continue
+            cp -R "$_e" "$_stage/" || exit 1
+        done)         && mv "$_stage" "$DATA_DIR" 2>/dev/null; then
+        info "Données de l'ancienne version copiées depuis $_old."
+    else
+        rm -rf "$_stage" 2>/dev/null
+        printf "Avertissement : les données de l'ancienne version (%s) n'ont pas pu être copiées ; l'ancien dossier n'est pas modifié.
+" "$_old" >&2
+    fi
 }
 
 # detect_platform : pose OS_NAME (macos|linux), ARCH (x64|arm64).
@@ -168,8 +205,8 @@ detect_platform() {
     _os=$(uname -s 2>/dev/null)
     _arch=$(uname -m 2>/dev/null)
     if [ "$SIMULATE" = 1 ]; then
-        [ -n "${WDS_INSTALL_SIMULATE_OS:-}" ] && _os=$WDS_INSTALL_SIMULATE_OS
-        [ -n "${WDS_INSTALL_SIMULATE_ARCH:-}" ] && _arch=$WDS_INSTALL_SIMULATE_ARCH
+        [ -n "${DEVSECOPS_DOJO_INSTALL_SIMULATE_OS:-}" ] && _os=$DEVSECOPS_DOJO_INSTALL_SIMULATE_OS
+        [ -n "${DEVSECOPS_DOJO_INSTALL_SIMULATE_ARCH:-}" ] && _arch=$DEVSECOPS_DOJO_INSTALL_SIMULATE_ARCH
     fi
     case $_os in
         Darwin) OS_NAME=macos ;;
@@ -192,7 +229,7 @@ sim_log() {
 
 simulated_failure() {
     [ "$SIMULATE" = 1 ] || return 1
-    case ",$(printf '%s' "${WDS_INSTALL_SIMULATE_FAIL:-}" | tr -d ' ')," in
+    case ",$(printf '%s' "${DEVSECOPS_DOJO_INSTALL_SIMULATE_FAIL:-}" | tr -d ' ')," in
         *",$1,"*) return 0 ;;
     esac
     return 1
@@ -219,7 +256,7 @@ fetch() {
         info "Déjà téléchargé : $(basename "$2")"
         return 0
     fi
-    mkdir -p "$(dirname "$2")" || fail "impossible de créer $(dirname "$2")." 'WDS_DATA_DIR (dossier accessible en écriture)' ''
+    mkdir -p "$(dirname "$2")" || fail "impossible de créer $(dirname "$2")." 'DEVSECOPS_DOJO_DATA_DIR (dossier accessible en écriture)' ''
     if [ "$SIMULATE" = 1 ]; then
         sim_log "download $1"
         if simulated_failure download; then
@@ -227,8 +264,8 @@ fetch() {
         fi
         case $1 in
             */tools.toml)
-                if [ -n "${WDS_INSTALL_SIMULATE_TOOLS_TOML:-}" ]; then
-                    cp "$WDS_INSTALL_SIMULATE_TOOLS_TOML" "$2"
+                if [ -n "${DEVSECOPS_DOJO_INSTALL_SIMULATE_TOOLS_TOML:-}" ]; then
+                    cp "$DEVSECOPS_DOJO_INSTALL_SIMULATE_TOOLS_TOML" "$2"
                     return 0
                 fi
                 ;;
@@ -251,7 +288,7 @@ fetch() {
         rm -f "$_part"
         fail "Le téléchargement de $1 a échoué (code $_fetch_rc) : $_fetch_err" "$NETWORK_SETTINGS" "$ROUTE_TEXT"
     fi
-    mv -f "$_part" "$2" || fail "impossible d'écrire $2." 'WDS_DATA_DIR (dossier accessible en écriture)' ''
+    mv -f "$_part" "$2" || fail "impossible d'écrire $2." 'DEVSECOPS_DOJO_DATA_DIR (dossier accessible en écriture)' ''
 }
 
 # run_cmd <commande...> : exécutée sans stdin (le script peut venir d'un tube : curl | sh).
@@ -263,7 +300,7 @@ run_cmd() { "$@" </dev/null; }
 xcode_tools_present() {
     if [ "$SIMULATE" = 1 ]; then
         sim_log 'xcode-select -p'
-        [ "${WDS_INSTALL_SIMULATE_XCODE:-ok}" = ok ]
+        [ "${DEVSECOPS_DOJO_INSTALL_SIMULATE_XCODE:-ok}" = ok ]
         return
     fi
     xcode-select -p >/dev/null 2>&1 </dev/null
@@ -277,12 +314,12 @@ find_host_git() {
     _gmin=$(tool_value git min_version)
     _gp=''
     _gv=''
-    if [ "${WDS_INSTALL_FORCE_PROVISION_GIT:-}" = 1 ]; then
-        info 'WDS_INSTALL_FORCE_PROVISION_GIT=1 : le git du poste est ignoré.'
+    if [ "${DEVSECOPS_DOJO_INSTALL_FORCE_PROVISION_GIT:-}" = 1 ]; then
+        info 'DEVSECOPS_DOJO_INSTALL_FORCE_PROVISION_GIT=1 : le git du poste est ignoré.'
     elif [ "$SIMULATE" = 1 ]; then
-        _gv=${WDS_INSTALL_SIMULATE_GIT:-}
+        _gv=${DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT:-}
         [ "$_gv" = none ] && _gv=''
-        [ -n "$_gv" ] && _gp=${WDS_INSTALL_SIMULATE_GIT_PATH:-git}
+        [ -n "$_gv" ] && _gp=${DEVSECOPS_DOJO_INSTALL_SIMULATE_GIT_PATH:-git}
     else
         _gp=$(command -v git 2>/dev/null)
     fi
@@ -395,10 +432,10 @@ install_pixi() {
     if [ ! -f "$_tmp/pixi" ]; then
         rm -rf "$_tmp"
         rm -f "$_dl/$_name"
-        fail "L'archive de pixi ne contient pas l'exécutable attendu." 'WDS_DATA_DIR (dossier accessible en écriture)' "$ROUTE_TEXT"
+        fail "L'archive de pixi ne contient pas l'exécutable attendu." 'DEVSECOPS_DOJO_DATA_DIR (dossier accessible en écriture)' "$ROUTE_TEXT"
     fi
     chmod +x "$_tmp/pixi"
-    mv -f "$_tmp/pixi" "$PIXI_BIN" || fail "impossible d'écrire $PIXI_BIN." 'WDS_DATA_DIR (dossier accessible en écriture)' ''
+    mv -f "$_tmp/pixi" "$PIXI_BIN" || fail "impossible d'écrire $PIXI_BIN." 'DEVSECOPS_DOJO_DATA_DIR (dossier accessible en écriture)' ''
     rm -rf "$_tmp"
     rm -f "$_dl/$_name" "$_dl/$_name.sha256"
 }
@@ -444,7 +481,7 @@ find_host_uv() {
     UV_VERSION=''
     _umin=$(tool_value uv min_version)
     if [ "$SIMULATE" = 1 ]; then
-        _uv=${WDS_INSTALL_SIMULATE_UV:-}
+        _uv=${DEVSECOPS_DOJO_INSTALL_SIMULATE_UV:-}
         if [ -n "$_uv" ] && [ "$_uv" != none ] && version_at_least "$_uv" "$_umin"; then
             UV_PATH=uv
             UV_VERSION=$_uv
@@ -486,13 +523,13 @@ install_uv() {
 }
 
 # Un dossier « app » existant n'est remplacé que s'il est vide ou contient l'application
-# (pyproject.toml ou .git) : un WDS_DATA_DIR mal placé ne doit pas effacer un dossier de l'utilisateur.
+# (pyproject.toml ou .git) : un DEVSECOPS_DOJO_DATA_DIR mal placé ne doit pas effacer un dossier de l'utilisateur.
 assert_app_dir_replaceable() {
     [ -e "$1" ] || return 0
     [ -f "$1/pyproject.toml" ] && return 0
     [ -e "$1/.git" ] && return 0
     [ -z "$(ls -A "$1" 2>/dev/null)" ] && return 0
-    fail "Le dossier « $1 » existe et ne contient pas l'application : il n'est pas modifié." 'WDS_DATA_DIR (dossier réservé à WaveDevSecOps)' 'choisissez un autre WDS_DATA_DIR, ou videz ce dossier « app » vous-même, puis relancez la commande.'
+    fail "Le dossier « $1 » existe et ne contient pas l'application : il n'est pas modifié." 'DEVSECOPS_DOJO_DATA_DIR (dossier réservé à DevSecOps Dojo)' 'choisissez un autre DEVSECOPS_DOJO_DATA_DIR, ou videz ce dossier « app » vous-même, puis relancez la commande.'
 }
 
 # replace_app_dir <dossier prêt> : l'ancienne application (reste d'une voie zip, ou version
@@ -501,11 +538,11 @@ replace_app_dir() {
     _old="$APP_DIR.old"
     rm -rf "$_old"
     if [ -e "$APP_DIR" ]; then
-        mv "$APP_DIR" "$_old" || fail "impossible de déplacer $APP_DIR (fichier ouvert ?)." 'WDS_DATA_DIR (dossier accessible en écriture)' 'fermez l application, puis relancez la commande.'
+        mv "$APP_DIR" "$_old" || fail "impossible de déplacer $APP_DIR (fichier ouvert ?)." 'DEVSECOPS_DOJO_DATA_DIR (dossier accessible en écriture)' 'fermez l application, puis relancez la commande.'
     fi
     if ! mv "$1" "$APP_DIR"; then
         [ -e "$_old" ] && mv "$_old" "$APP_DIR"
-        fail "impossible de mettre l'application en place dans $APP_DIR." 'WDS_DATA_DIR (dossier accessible en écriture)' ''
+        fail "impossible de mettre l'application en place dans $APP_DIR." 'DEVSECOPS_DOJO_DATA_DIR (dossier accessible en écriture)' ''
     fi
     rm -rf "$_old"
 }
@@ -554,7 +591,7 @@ install_app_by_clone() {
 install_app_by_archive() {
     assert_app_dir_replaceable "$APP_DIR"
     _url="$ARCHIVE_URL_BASE/$REF.tar.gz"
-    _arc="$DATA_DIR/cache/downloads/wavedevsecops-$(printf '%s' "$REF" | tr '/' '_').tar.gz"
+    _arc="$DATA_DIR/cache/downloads/devsecops-dojo-$(printf '%s' "$REF" | tr '/' '_').tar.gz"
     rm -f "$_arc"   # l'archive d'une branche change : toujours fraîche
     fetch "$_url" "$_arc"
     _staging="$APP_DIR.new"
@@ -564,15 +601,15 @@ install_app_by_archive() {
         sim_log "zip-extract $_url -> $APP_DIR"
         printf 'simulation' >"$_staging/pyproject.toml"
     else
-        # L'archive GitHub contient un seul dossier « wavedevsecops-<ref> » : on le remonte.
+        # L'archive GitHub contient un seul dossier « devsecops-dojo-<ref> » : on le remonte.
         if ! tar -xzf "$_arc" -C "$_staging" --strip-components=1 </dev/null 2>/dev/null; then
             rm -rf "$_staging"
             rm -f "$_arc"
-            fail "L'archive n'a pas pu être extraite (fichier corrompu ou « tar » indisponible)." 'WDS_DATA_DIR (dossier accessible en écriture)' "$ROUTE_TEXT"
+            fail "L'archive n'a pas pu être extraite (fichier corrompu ou « tar » indisponible)." 'DEVSECOPS_DOJO_DATA_DIR (dossier accessible en écriture)' "$ROUTE_TEXT"
         fi
         if [ ! -f "$_staging/pyproject.toml" ]; then
             rm -rf "$_staging"
-            fail "L'archive ne contient pas l'application attendue (pyproject.toml absent)." 'WDS_INSTALL_REF' "$ROUTE_TEXT"
+            fail "L'archive ne contient pas l'application attendue (pyproject.toml absent)." 'DEVSECOPS_DOJO_INSTALL_REF' "$ROUTE_TEXT"
         fi
     fi
     replace_app_dir "$_staging"
@@ -662,11 +699,11 @@ install_gitleaks() {
     if [ ! -f "$_new/gitleaks" ]; then
         rm -rf "$_new"
         rm -f "$_dl/$_name"
-        fail "L'archive de gitleaks ne contient pas l'exécutable attendu." 'WDS_DATA_DIR (dossier accessible en écriture)' "$ROUTE_TEXT"
+        fail "L'archive de gitleaks ne contient pas l'exécutable attendu." 'DEVSECOPS_DOJO_DATA_DIR (dossier accessible en écriture)' "$ROUTE_TEXT"
     fi
     chmod +x "$_new/gitleaks"
     rm -rf "$DATA_DIR/tools/gitleaks"
-    mv "$_new" "$DATA_DIR/tools/gitleaks" || fail "impossible d'écrire $DATA_DIR/tools/gitleaks." 'WDS_DATA_DIR (dossier accessible en écriture)' ''
+    mv "$_new" "$DATA_DIR/tools/gitleaks" || fail "impossible d'écrire $DATA_DIR/tools/gitleaks." 'DEVSECOPS_DOJO_DATA_DIR (dossier accessible en écriture)' ''
     rm -f "$_dl/$_name" "$_dl/gitleaks_${GL_VERSION}_checksums.txt"
 }
 
@@ -719,8 +756,8 @@ write_install_json() {
         printf '  "app_dir": "%s",\n' "$(json_escape "$APP_DIR")"
         printf '  "versions": {\n%s\n  }\n' "$VERSIONS"
         printf '}\n'
-    } >"$_tmp" || fail "impossible d'écrire install.json dans $DATA_DIR." 'WDS_DATA_DIR (dossier accessible en écriture)' ''
-    mv -f "$_tmp" "$DATA_DIR/install.json" || fail "impossible d'écrire install.json dans $DATA_DIR." 'WDS_DATA_DIR (dossier accessible en écriture)' ''
+    } >"$_tmp" || fail "impossible d'écrire install.json dans $DATA_DIR." 'DEVSECOPS_DOJO_DATA_DIR (dossier accessible en écriture)' ''
+    mv -f "$_tmp" "$DATA_DIR/install.json" || fail "impossible d'écrire install.json dans $DATA_DIR." 'DEVSECOPS_DOJO_DATA_DIR (dossier accessible en écriture)' ''
 }
 
 # add_version <clé> <valeur> : ajoute une ligne à l'objet « versions » d'install.json.
@@ -738,18 +775,19 @@ main() {
     CURRENT_STEP='Préparation'
     detect_platform
     get_data_dir
-    METHOD=$(printf '%s' "${WDS_INSTALL_METHOD:-clone}" | tr '[:upper:]' '[:lower:]')
+    migrate_legacy_data
+    METHOD=$(printf '%s' "${DEVSECOPS_DOJO_INSTALL_METHOD:-clone}" | tr '[:upper:]' '[:lower:]')
     [ -n "$METHOD" ] || METHOD=clone
     case $METHOD in
         clone | zip) ;;
-        *) CURRENT_STEP='Préparation'; fail "WDS_INSTALL_METHOD vaut « $METHOD » : seules les valeurs clone et zip existent." 'WDS_INSTALL_METHOD=clone ou zip' '' ;;
+        *) CURRENT_STEP='Préparation'; fail "DEVSECOPS_DOJO_INSTALL_METHOD vaut « $METHOD » : seules les valeurs clone et zip existent." 'DEVSECOPS_DOJO_INSTALL_METHOD=clone ou zip' '' ;;
     esac
-    REF=$(trim "${WDS_INSTALL_REF:-main}")
+    REF=$(trim "${DEVSECOPS_DOJO_INSTALL_REF:-main}")
     [ -n "$REF" ] || REF=main
     APP_DIR="$DATA_DIR/app"
 
     step 'Préparation'
-    mkdir -p "$DATA_DIR/tools" "$DATA_DIR/cache" || fail "impossible de créer $DATA_DIR." 'WDS_DATA_DIR (dossier accessible en écriture)' ''
+    mkdir -p "$DATA_DIR/tools" "$DATA_DIR/cache" || fail "impossible de créer $DATA_DIR." 'DEVSECOPS_DOJO_DATA_DIR (dossier accessible en écriture)' ''
     [ "$SIMULATE" = 1 ] && SIMLOG="$DATA_DIR/install.simulation.log"
     read_previous_install
     [ -n "$PREV_FILE" ] && info 'Installation existante : mise à jour (progress.json est conservé).'
@@ -793,7 +831,7 @@ main() {
             add_version git "$GIT_VERSION"
             add_version git_source "$GIT_SOURCE"
         else
-            info "Attention : git $GIT_MIN ou plus est introuvable. La voie archive s'en passe pour l'installation, mais les exercices en ont besoin : relancez sans WDS_INSTALL_METHOD=zip pour que l'installeur le provisionne, ou installez git vous-même."
+            info "Attention : git $GIT_MIN ou plus est introuvable. La voie archive s'en passe pour l'installation, mais les exercices en ont besoin : relancez sans DEVSECOPS_DOJO_INSTALL_METHOD=zip pour que l'installeur le provisionne, ou installez git vous-même."
             sim_log 'zip: git absent, non provisionné'
         fi
     fi
@@ -835,7 +873,7 @@ main() {
 
     printf '\nInstallation terminée.\n'
     printf "Lancer l'application :\n"
-    printf '    "%s" run --project "%s" wavedevsecops\n' "$UV_PATH" "$APP_DIR"
+    printf '    "%s" run --project "%s" devsecops-dojo\n' "$UV_PATH" "$APP_DIR"
     if [ "$UV_PATH" != uv ] && ! command -v uv >/dev/null 2>&1; then
         printf 'Ouvrez un nouveau terminal pour que « uv » soit dans le PATH (le profil a été mis à jour par l installeur de uv).\n'
     fi
@@ -844,4 +882,4 @@ main() {
     fi
 }
 
-[ "${WDS_INSTALL_LIBONLY:-}" = 1 ] || main "$@"
+[ "${DEVSECOPS_DOJO_INSTALL_LIBONLY:-}" = 1 ] || main "$@"

@@ -12,18 +12,18 @@ from pathlib import Path
 
 import pytest
 
-from wavedevsecops import cli
-from wavedevsecops.config import Settings
-from wavedevsecops.progress import FILENAME, write_json_atomic
-from wavedevsecops.progress.facts import RESTART_KIND, Fact, ProgressStore
-from wavedevsecops.progress.report import (
+from devsecops_dojo import cli
+from devsecops_dojo.config import Settings
+from devsecops_dojo.progress import FILENAME, write_json_atomic
+from devsecops_dojo.progress.facts import RESTART_KIND, Fact, ProgressStore
+from devsecops_dojo.progress.report import (
     EMPTY_TEXT,
     build_report,
     render_csv,
     render_html,
     resets_text,
 )
-from wavedevsecops.web.catalogue import report_font_css
+from devsecops_dojo.web.catalogue import report_font_css
 
 NOW = datetime.fromisoformat("2026-10-19T14:03:00+02:00")
 
@@ -147,7 +147,7 @@ def test_csv_utf8_bom_point_virgule_et_accents(tmp_path: Path) -> None:
     assert cells[3] == "Terminé" and cells[7] == "2"
 
 
-FORMULAS = ("=HYPERLINK(\"x\")", "=cmd|' /C calc'!A0", "+1", "-1", "@SUM(A1)", "\tx")
+FORMULAS = ('=HYPERLINK("x")', "=cmd|' /C calc'!A0", "+1", "-1", "@SUM(A1)", "\tx")
 
 
 @pytest.mark.parametrize("payload", FORMULAS)
@@ -167,8 +167,14 @@ FORMULAS = ("=HYPERLINK(\"x\")", "=cmd|' /C calc'!A0", "+1", "-1", "@SUM(A1)", "
 )
 def test_csv_chaque_colonne_neutralisee(column: str, payload: str) -> None:
     row = {
-        "title": "t", "mode": "A", "state_text": "Terminé", "quiz_correct": 1, "quiz_total": 2,
-        "hints": 0, "resets": 0, "completed_text": "",
+        "title": "t",
+        "mode": "A",
+        "state_text": "Terminé",
+        "quiz_correct": 1,
+        "quiz_total": 2,
+        "hints": 0,
+        "resets": 0,
+        "completed_text": "",
     }
     track = {"label": "Parcours"}
     (track if column == "label" else row)[column] = payload
@@ -184,10 +190,10 @@ def test_csv_dates_brutes_neutralisees(tmp_path: Path, key: str) -> None:
     base(tmp_path)
     path = tmp_path / FILENAME
     stored = json.loads(path.read_text(encoding="utf-8"))
-    write_json_atomic(path, {**stored, key: "=HYPERLINK(\"http://x\")"})
+    write_json_atomic(path, {**stored, key: '=HYPERLINK("http://x")'})
     text = render_csv(build_report(tmp_path, now=NOW)).decode("utf-8-sig")
     rows = list(csv.reader(text.splitlines()[:2], delimiter=";"))
-    assert "'=HYPERLINK(\"http://x\")" in [cell for r in rows for cell in r]
+    assert '\'=HYPERLINK("http://x")' in [cell for r in rows for cell in r]
 
 
 def test_remise_seule_ne_commence_pas_le_scenario(tmp_path: Path) -> None:
@@ -246,7 +252,7 @@ def test_apercu_et_exports_servis(instance: cli.Instance, cookie: dict) -> None:
     status, headers, raw = get(instance, "/api/report/export?format=csv", cookie)
     assert status == 200 and raw.startswith(b"\xef\xbb\xbf")
     assert headers["content-type"].startswith("text/csv")
-    assert 'filename="rapport-wavedevsecops.csv"' in headers["content-disposition"]
+    assert 'filename="rapport-devsecops-dojo.csv"' in headers["content-disposition"]
     status, headers, raw = get(instance, "/api/report/export?format=html", cookie)
     assert status == 200 and raw.decode("utf-8").startswith("<!doctype html>")
     assert "attachment" in headers["content-disposition"]

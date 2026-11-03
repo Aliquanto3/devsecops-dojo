@@ -7,26 +7,26 @@ tools:
     label: "git"
     todo:
       missing: >-
-        Installez git, ou relancez l'installeur de WaveDevSecOps : il place un git dans le
+        Installez git, ou relancez l'installeur de DevSecOps Dojo : il place un git dans le
         dossier tools/ de l'application, sans droits administrateur.
       too_old: >-
-        Votre git est trop ancien. Relancez l'installeur de WaveDevSecOps : il place un git
+        Votre git est trop ancien. Relancez l'installeur de DevSecOps Dojo : il place un git
         récent dans le dossier tools/ de l'application, sans toucher à celui de votre poste.
   uv:
     label: "uv"
     todo:
       missing: >-
-        Installez uv (installeur de WaveDevSecOps, ou la commande indiquée sur le site
+        Installez uv (installeur de DevSecOps Dojo, ou la commande indiquée sur le site
         d'uv), puis relancez le diagnostic.
       too_old: "Mettez uv à jour avec la commande `uv self update`, puis relancez le diagnostic."
   gitleaks:
     label: "gitleaks"
     todo:
       missing: >-
-        Relancez l'installeur de WaveDevSecOps : il télécharge gitleaks, vérifie sa somme de
+        Relancez l'installeur de DevSecOps Dojo : il télécharge gitleaks, vérifie sa somme de
         contrôle et le place dans le dossier tools/. Seule la station 1 en a besoin.
       too_old: >-
-        Relancez l'installeur de WaveDevSecOps pour obtenir la version de gitleaks attendue.
+        Relancez l'installeur de DevSecOps Dojo pour obtenir la version de gitleaks attendue.
   _python_package:
     todo:
       missing: "Lancez `uv sync` pour installer les outils de la chaîne."
@@ -89,7 +89,7 @@ part_statuses:
 # Textes de la page Diagnostic (Story 1.5) : le front les affiche tels quels.
 ui:
   title: "Diagnostic"
-  subtitle: "Outils, versions et réglages du poste, tels que WaveDevSecOps les voit"
+  subtitle: "Outils, versions et réglages du poste, tels que DevSecOps Dojo les voit"
   rerun: "Relancer le diagnostic"
   searching: "Recherche en cours…"
   running: "En cours"

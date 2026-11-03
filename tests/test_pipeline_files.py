@@ -17,18 +17,18 @@ from pathlib import Path
 import pytest
 from test_workspace_api import _call
 
-from wavedevsecops import ci, cli, github_sim
-from wavedevsecops.ci import pipeline_files as pf
-from wavedevsecops.config import Settings
-from wavedevsecops.contracts import AppError
-from wavedevsecops.engine import INTENTS, prepare_workspace
-from wavedevsecops.gitio import Git
-from wavedevsecops.projections import project
-from wavedevsecops.scenarios import LoadedScenario, load_scenario, parse_scenario
-from wavedevsecops.terminal.allowlist import get_allowlist
-from wavedevsecops.terminal.parse import Refused, parse_line
-from wavedevsecops.web.code import pipeline_view
-from wavedevsecops.web.exercise import RunExerciseCode
+from devsecops_dojo import ci, cli, github_sim
+from devsecops_dojo.ci import pipeline_files as pf
+from devsecops_dojo.config import Settings
+from devsecops_dojo.contracts import AppError
+from devsecops_dojo.engine import INTENTS, prepare_workspace
+from devsecops_dojo.gitio import Git
+from devsecops_dojo.projections import project
+from devsecops_dojo.scenarios import LoadedScenario, load_scenario, parse_scenario
+from devsecops_dojo.terminal.allowlist import get_allowlist
+from devsecops_dojo.terminal.parse import Refused, parse_line
+from devsecops_dojo.web.code import pipeline_view
+from devsecops_dojo.web.exercise import RunExerciseCode
 
 ROOT = Path(__file__).resolve().parent.parent
 EXERCISE = ROOT / "content" / "exercise"
@@ -338,7 +338,7 @@ def test_aucune_intention_ne_lance_un_fichier_du_pipeline() -> None:
 
 
 def test_le_module_ne_fait_que_lire() -> None:
-    source = (ROOT / "src" / "wavedevsecops" / "ci" / "pipeline_files.py").read_text("utf-8")
+    source = (ROOT / "src" / "devsecops_dojo" / "ci" / "pipeline_files.py").read_text("utf-8")
     for forbidden in ("spawn", "run_tool", "subprocess", "os.system", "Popen", "procs"):
         assert forbidden not in source, forbidden
     assert '"cat-file"' in source  # lecture d'un blob, ni checkout ni exécution
@@ -407,7 +407,5 @@ def test_un_pipeline_yaml_illisible_est_un_refus_409_et_non_une_pr_absente(
 
     monkeypatch.setattr(ci, "load_pipeline", broken)
     session = _session(lint_instance)
-    status, refused = _call(
-        lint_instance, "GET", f"/api/ws/{LINT_WS}/code/pipeline?pr=1", session
-    )
+    status, refused = _call(lint_instance, "GET", f"/api/ws/{LINT_WS}/code/pipeline?pr=1", session)
     assert status == 409 and "pipeline.yaml est invalide" in refused["reason_text"]
