@@ -1,7 +1,8 @@
 """Les trois écritures du pipeline, lues sur le SHA de tête (AD-10, story 7.6).
 
 Le gabarit porte `.github/workflows/ci.yml`, `Jenkinsfile` et `.gitlab-ci.yml`. Chaque tâche de
-`content/pipeline.yaml` y est encadrée par deux commentaires, `wds:job <job_id>` puis `wds:end`.
+`content/pipeline.yaml` y est encadrée par deux commentaires, `dojo:job <job_id>` puis `dojo:end`
+(ancienne forme `wds:job` / `wds:end` encore lue : fichiers d'espaces créés avant le renommage).
 `ci` en tire les plages de lignes de chaque tâche, sur le contenu du fichier au SHA de tête de la
 PR : les lignes ne sont jamais codées en dur. Une balise absente, mal fermée ou en double donne un
 constat non bloquant (`Finding`), jamais une exception. Ces fichiers ne s'exécutent pas : ce
@@ -18,10 +19,10 @@ from devsecops_dojo.contracts.github import Finding
 from devsecops_dojo.gitio import Git
 from devsecops_dojo.wsfs import Layout
 
-JOB_MARK = re.compile(r"^\s*(?:#|//)\s*wds:job\s+(?P<job_id>[A-Za-z0-9_]+)\s*$")
-END_MARK = re.compile(r"^\s*(?:#|//)\s*wds:end\s*$")
+JOB_MARK = re.compile(r"^\s*(?:#|//)\s*(?:dojo|wds):job\s+(?P<job_id>[A-Za-z0-9_]+)\s*$")
+END_MARK = re.compile(r"^\s*(?:#|//)\s*(?:dojo|wds):end\s*$")
 # Une balise est un commentaire (`#` ou `//`) qui ne contient qu'elle, seul sur sa ligne : la phrase
-# d'en-tête d'un fichier qui cite « wds:job » n'en est pas une.
+# d'en-tête d'un fichier qui cite « dojo:job » n'en est pas une.
 
 MARK_MISSING_RULE = "pipeline_mark_missing"
 FILE_MISSING_RULE = "pipeline_file_missing"
@@ -94,7 +95,7 @@ def job_ranges(file: PipelineFile, content: str, job_ids: list[str]) -> FileLine
                     _finding(
                         file,
                         MARK_BROKEN_RULE,
-                        f"La tâche « {open_job} » n'est pas fermée par « wds:end » avant "
+                        f"La tâche « {open_job} » n'est pas fermée par « dojo:end » avant "
                         f"« {start['job_id']} » (ligne {number}).",
                         opened_at,
                     )
@@ -105,7 +106,7 @@ def job_ranges(file: PipelineFile, content: str, job_ids: list[str]) -> FileLine
             continue
         if open_job is None:
             result.findings.append(
-                _finding(file, MARK_BROKEN_RULE, "Un « wds:end » ne ferme aucune tâche.", number)
+                _finding(file, MARK_BROKEN_RULE, "Un « dojo:end » ne ferme aucune tâche.", number)
             )
             continue
         if open_job in seen:
@@ -131,7 +132,7 @@ def job_ranges(file: PipelineFile, content: str, job_ids: list[str]) -> FileLine
             _finding(
                 file,
                 MARK_BROKEN_RULE,
-                f"La tâche « {open_job} » n'est jamais fermée par « wds:end ».",
+                f"La tâche « {open_job} » n'est jamais fermée par « dojo:end ».",
                 opened_at,
             )
         )
@@ -141,8 +142,8 @@ def job_ranges(file: PipelineFile, content: str, job_ids: list[str]) -> FileLine
                 _finding(
                     file,
                     MARK_MISSING_RULE,
-                    f"La tâche « {job_id} » n'est pas encadrée par « wds:job {job_id} » et "
-                    "« wds:end » : ses lignes ne peuvent pas être surlignées.",
+                    f"La tâche « {job_id} » n'est pas encadrée par « dojo:job {job_id} » et "
+                    "« dojo:end » : ses lignes ne peuvent pas être surlignées.",
                 )
             )
     return result

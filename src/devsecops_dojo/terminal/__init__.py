@@ -115,8 +115,9 @@ def _run_git(ctx: OpContext, command: GitCommand, allow: Allowlist) -> int:
             ctx.output(f"{reason} {allow.accepted_options(command.sub)}", "refused")
             return EXIT_REFUSED
 
-    if command.sub == "push":
-        # Le chemin de Python porté par les hooks suit l'application (environnement recréé).
+    if command.sub in ("push", "commit"):
+        # Le chemin de Python porté par les hooks suit l'application (environnement recréé,
+        # espace copié depuis l'ancien dossier de données) : `pre-commit` comme `pre-receive`.
         hooks.refresh(ctx.layout.hooks)
     guarded = command.sub == "commit" and hooks.pre_commit_installed(ctx.layout.hooks)
     if guarded and "--no-verify" in command.options:

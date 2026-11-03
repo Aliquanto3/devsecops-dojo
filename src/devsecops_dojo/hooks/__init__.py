@@ -18,8 +18,9 @@ Contrat (stories 3.5, 5.7, 7.3) :
 
 Le script porte le chemin de l'interpréteur de l'application (`sys.executable`). Si ce chemin
 change (environnement recréé ailleurs), `refresh` réécrit les scripts posés : le terminal
-l'appelle avant chaque `git push`. L'empreinte (AD-6) lit `canonical_script`, sans ce chemin,
-pour rester la même d'un poste à l'autre (empreintes de référence d'AD-18).
+l'appelle avant chaque `git push` et chaque `git commit`. L'empreinte (AD-6) lit
+`canonical_script`, sans ce chemin, pour rester la même d'un poste à l'autre (empreintes de
+référence d'AD-18).
 """
 
 from __future__ import annotations
@@ -43,7 +44,9 @@ BRANCH_PREFIX = "refs/heads/"
 EXIT_REFUSED = 1
 
 _SH_SPECIAL = re.compile(r'([\\"$`])')
-_INTERPRETER = re.compile(rb'^exec ".*" -m devsecops_dojo\.hooks ', re.MULTILINE)
+# `wavedevsecops.hooks` : hooks posés avant le renommage, dans un espace copié par la migration
+# (`config.migrate_legacy_data_dir`) ; `refresh` les réécrit, l'empreinte les lit comme les neufs.
+_INTERPRETER = re.compile(rb'^exec ".*" -m (?:devsecops_dojo|wavedevsecops)\.hooks ', re.MULTILINE)
 
 
 def _sh_quote(text: str) -> str:
@@ -66,13 +69,15 @@ def canonical_script(data: bytes) -> bytes:
 
 def refresh(hooks_dir: Path, python: Path | None = None) -> list[str]:
     """Réécrit les hooks posés dont l'interpréteur n'est plus celui de l'application ; rend
-    leurs noms. Un hook absent n'est pas posé (seule l'op `install_hooks` le fait)."""
+    leurs noms. Un hook absent ou étranger n'est pas posé (seule l'op `install_hooks` le fait)."""
     python = python or Path(sys.executable)
     rewritten = []
     for name in HOOK_NAMES:
         expected = hook_script(name, python)
         current = wsfs.read_bytes(hooks_dir, name)
-        if current is not None and current != expected.encode("utf-8"):
+        # Seuls les scripts de l'application (`_INTERPRETER`) sont réécrits, jamais un autre hook.
+        ours = current is not None and _INTERPRETER.search(current) is not None
+        if ours and current != expected.encode("utf-8"):
             wsfs.write_executable(hooks_dir, name, expected)
             rewritten.append(name)
     return rewritten
@@ -174,7 +179,10 @@ def read_refusal(layout: Layout) -> Refusal | None:
 def pre_commit_installed(hooks_dir: Path) -> bool:
     """Vrai si le hook `pre-commit` de l'application est posé dans `hooks/`."""
     raw = wsfs.read_bytes(hooks_dir, "pre-commit")
-    return raw is not None and b" -m devsecops_dojo.hooks pre-commit" in raw
+    return raw is not None and any(
+        f" -m {module}.hooks pre-commit".encode() in raw
+        for module in ("devsecops_dojo", "wavedevsecops")
+    )
 
 
 def repo_layout(cwd: Path) -> Layout | None:

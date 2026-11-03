@@ -19,7 +19,7 @@ from test_workspace_api import WS, Stream, _call, _conn, cookie, instance  # noq
 from devsecops_dojo import cli, llmrun
 from devsecops_dojo.engine import INTENTS, OperationRefused, list_snapshots
 from devsecops_dojo.procs import Chunk
-from devsecops_dojo.web import exercise
+from devsecops_dojo.web import SESSION_COOKIE, exercise
 from devsecops_dojo.wsfs import Layout
 
 PATH = f"/api/ws/{WS}/run_exercise_code"
@@ -149,8 +149,8 @@ def test_refus_sans_cookie_ou_sans_origine(instance: cli.Instance, fake_run: lis
     origin = f"http://{cli.HOST}:{instance.port}"
     for headers, expected in (
         ({"Origin": origin, "Content-Type": "application/json"}, 401),  # sans cookie
-        ({"Origin": origin, "Cookie": "wds_session=faux"}, 401),  # mauvais cookie
-        ({"Origin": "http://evil.example", "Cookie": "wds_session=faux"}, 403),
+        ({"Origin": origin, "Cookie": f"{SESSION_COOKIE}=faux"}, 401),  # mauvais cookie
+        ({"Origin": "http://evil.example", "Cookie": f"{SESSION_COOKIE}=faux"}, 403),
     ):
         conn: http.client.HTTPConnection = _conn(instance)
         conn.request("POST", PATH, body=body, headers=headers)

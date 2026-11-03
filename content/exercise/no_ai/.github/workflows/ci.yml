@@ -1,6 +1,6 @@
 # Pipeline du projet en GitHub Actions. Le même pipeline s'écrit dans « Jenkinsfile » (Jenkins)
 # et dans « .gitlab-ci.yml » (GitLab CI) : sept tâches, l'une après l'autre.
-# Les commentaires « wds:job » et « wds:end » encadrent chaque tâche : DevSecOps Dojo s'en sert pour
+# Les commentaires « dojo:job » et « dojo:end » encadrent chaque tâche : DevSecOps Dojo s'en sert pour
 # surligner ses lignes. Ce fichier se lit, il ne s'exécute pas dans DevSecOps Dojo.
 name: CI
 
@@ -10,7 +10,7 @@ on:
     branches: [main]
 
 jobs:
-  # wds:job ruff
+  # dojo:job ruff
   ruff:
     name: Lint (ruff)
     runs-on: ubuntu-latest
@@ -19,9 +19,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --frozen
       - run: uv run ruff check .
-  # wds:end
+  # dojo:end
 
-  # wds:job pytest
+  # dojo:job pytest
   pytest:
     name: Tests (pytest)
     needs: ruff
@@ -31,9 +31,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --frozen
       - run: uv run pytest -q --tb=short
-  # wds:end
+  # dojo:end
 
-  # wds:job gitleaks
+  # dojo:job gitleaks
   gitleaks:
     name: Secrets (gitleaks)
     needs: pytest
@@ -43,9 +43,9 @@ jobs:
       # gitleaks doit être installé sur la machine qui exécute la tâche.
       # `--config` et `--ignore-gitleaks-allow` : réglages de gitleaks lus hors de votre dépôt ({config} : dossier de la plateforme), donc ni un .gitleaks.toml ni un « gitleaks:allow » n'écartent un secret.
       - run: gitleaks dir --no-banner --redact --exit-code 3 --ignore-gitleaks-allow --config '{config}/gitleaks.toml' .
-  # wds:end
+  # dojo:end
 
-  # wds:job bandit
+  # dojo:job bandit
   bandit:
     name: Analyse de sécurité (bandit)
     needs: gitleaks
@@ -57,9 +57,9 @@ jobs:
       # Le code de l'application (src/), sans les exemptions « # nosec ».
       # `--ini` : réglages de bandit lus hors de votre dépôt ({config} : dossier de la plateforme), donc un fichier .bandit déposé dans src/ n'écarte aucun test.
       - run: uv run bandit -r src -q --ignore-nosec --ini '{config}/bandit.ini'
-  # wds:end
+  # dojo:end
 
-  # wds:job pip_audit
+  # dojo:job pip_audit
   pip_audit:
     name: Dépendances (pip-audit)
     needs: bandit
@@ -70,9 +70,9 @@ jobs:
       - run: uv sync --frozen
       # Dépendances épinglées de requirements.txt, sans résolution ; {osv_url} : adresse du point OSV (dans DevSecOps Dojo : le point local, base figée).
       - run: uv run pip-audit --vulnerability-service osv --osv-url '{osv_url}' --no-deps --disable-pip --progress-spinner off -r requirements.txt
-  # wds:end
+  # dojo:end
 
-  # wds:job uv_lock
+  # dojo:job uv_lock
   uv_lock:
     name: Verrou des dépendances (uv)
     needs: pip_audit
@@ -82,9 +82,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       # Échoue si uv.lock ne correspond plus à pyproject.toml : `uv sync --frozen` ne le voit pas.
       - run: uv lock --check
-  # wds:end
+  # dojo:end
 
-  # wds:job quality_gate
+  # dojo:job quality_gate
   quality_gate:
     name: Couverture du nouveau code (quality gate)
     needs: uv_lock
@@ -100,4 +100,4 @@ jobs:
       - run: uv run pytest -o addopts= --cov '--cov-config={config}/coverage.ini' '--cov-report=xml:{reports}/coverage.xml' -q --tb=short
       # Échoue sous 80 % de couverture des lignes modifiées ; {base_sha} : le commit de base de la PR.
       - run: uv run diff-cover '{reports}/coverage.xml' '--compare-branch={base_sha}' --fail-under=80
-  # wds:end
+  # dojo:end

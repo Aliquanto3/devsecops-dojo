@@ -32,7 +32,7 @@ def _env(data: Path, **extra: str) -> dict[str, str]:
     env = {
         k: v
         for k, v in os.environ.items()
-        if not k.upper().startswith(("DEVSECOPS_DOJO_", "HTTPS_PROXY"))
+        if not k.upper().startswith(("DEVSECOPS_DOJO_", "WDS_", "HTTPS_PROXY"))
     }
     env.update(DEVSECOPS_DOJO_DATA_DIR=str(data), DEVSECOPS_DOJO_INSTALL_SIMULATE="1", **extra)
     return env
@@ -82,6 +82,26 @@ def test_script_utf8_avec_bom() -> None:
     assert SCRIPT.read_bytes().startswith(b"\xef\xbb\xbf")
 
 
+def test_migration_de_l_ancien_dossier_de_donnees(tmp_path: Path) -> None:
+    old = tmp_path / "WaveDevSecOps"
+    (old / "app").mkdir(parents=True)
+    (old / "progress.json").write_text("{}", encoding="utf-8")
+    (old / "app.lock").write_text("verrou", encoding="utf-8")
+    new = tmp_path / "DevSecOpsDojo"
+    env = {
+        k: v for k, v in os.environ.items() if not k.upper().startswith(("DEVSECOPS_DOJO_", "WDS_"))
+    }
+    out = _run(
+        ["-Command", f". '{SCRIPT}'; Copy-LegacyDataDir '{new}'; Copy-LegacyDataDir '{new}'"],
+        {**env, "DEVSECOPS_DOJO_INSTALL_LIBONLY": "1"},
+    )
+    assert out.returncode == 0, out.stderr
+    assert (new / "progress.json").read_text(encoding="utf-8") == "{}"
+    assert not (new / "app").exists() and not (new / "app.lock").exists()
+    assert (old / "app.lock").exists() and (old / "app").is_dir()
+    assert not list(tmp_path.glob("*.migration-*"))
+
+
 @pytest.mark.slow
 def test_versions_git(tmp_path: Path) -> None:
     cases = {
@@ -119,7 +139,9 @@ def test_url_portablegit(tmp_path: Path) -> None:
 
 
 def test_dossier_de_donnees_comme_l_application() -> None:
-    env = {k: v for k, v in os.environ.items() if not k.upper().startswith("DEVSECOPS_DOJO_")}
+    env = {
+        k: v for k, v in os.environ.items() if not k.upper().startswith(("DEVSECOPS_DOJO_", "WDS_"))
+    }
     out = _run(
         ["-Command", f". '{SCRIPT}'; Get-DataDir"], {**env, "DEVSECOPS_DOJO_INSTALL_LIBONLY": "1"}
     )

@@ -178,7 +178,7 @@ get_data_dir() {
 
 # migrate_legacy_data : copie l'ancien dossier de données (nom « WaveDevSecOps ») vers DATA_DIR
 # si celui-ci n'existe pas encore et si l'utilisateur n'a pas choisi son dossier. Sans le
-# sous-dossier app/ (réinstallé). Jamais bloquant, jamais de suppression de l'ancien dossier.
+# sous-dossier app/ (réinstallé) ni le verrou app.lock. Jamais bloquant, jamais de suppression de l'ancien dossier.
 migrate_legacy_data() {
     [ -z "$(trim "${DEVSECOPS_DOJO_DATA_DIR:-}")" ] || return 0
     _old=$(printf '%s' "$DATA_DIR" | sed 's#/DevSecOpsDojo$#/WaveDevSecOps#')
@@ -189,7 +189,7 @@ migrate_legacy_data() {
     rm -rf "$_stage" 2>/dev/null
     if mkdir -p "$_stage" 2>/dev/null         && (cd "$_old" && for _e in .[!.]* *; do
             [ -e "$_e" ] || continue
-            [ "$_e" = app ] && continue
+            case $_e in app | app.lock) continue ;; esac
             cp -R "$_e" "$_stage/" || exit 1
         done)         && mv "$_stage" "$DATA_DIR" 2>/dev/null; then
         info "Données de l'ancienne version copiées depuis $_old."

@@ -119,7 +119,7 @@ def _run_tests(repo: Path) -> tuple[int | None, str]:
         synced = toolrun.sync_environment(repo, venv, settings)
         assert synced.ok, f"{synced.error}\n{synced.stdout}\n{synced.stderr}"
         site = toolrun.site_packages(venv)
-        assert site is not None and (site / "_wds_netguard.pth").is_file()
+        assert site is not None and (site / "_devsecops_dojo_netguard.pth").is_file()
         assert not (repo / ".venv").exists()  # le bac à sable reste propre
         ran = toolrun.run_tool(
             "pytest",

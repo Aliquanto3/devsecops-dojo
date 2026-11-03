@@ -155,6 +155,21 @@ def test_le_chemin_de_python_est_echappe_pour_sh(tmp_path: Path) -> None:
     )
 
 
+def test_hook_pose_avant_le_renommage_reconnu_puis_reecrit(tmp_path: Path) -> None:
+    """Espace copié depuis l'ancien dossier de données : hooks `-m wavedevsecops.hooks`."""
+    from devsecops_dojo.wsfs import write_executable
+
+    hooks_dir = tmp_path / "hooks"
+    hooks_dir.mkdir()
+    legacy = '#!/bin/sh\nexec "/ancien/python" -m wavedevsecops.hooks pre-commit "$@"\n'
+    write_executable(hooks_dir, "pre-commit", legacy)
+    assert hooks.pre_commit_installed(hooks_dir)  # `--no-verify` reste refusé
+    fresh = hooks.hook_script("pre-commit", Path("/neuf/python"))
+    assert hooks.canonical_script(legacy.encode()) == hooks.canonical_script(fresh.encode())
+    assert hooks.refresh(hooks_dir) == ["pre-commit"]
+    assert b"-m devsecops_dojo.hooks pre-commit" in (hooks_dir / "pre-commit").read_bytes()
+
+
 @pytest.mark.slow
 def test_l_empreinte_ne_depend_pas_du_chemin_de_python(settings: Settings, git_path: Path) -> None:
     """Revue 3.5 : la référence d'AD-18 d'un scénario avec hooks vaut sur tout poste."""

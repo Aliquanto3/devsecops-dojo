@@ -58,6 +58,17 @@ def test_nouvelle_variable_prime_sans_avertissement(
     assert not [w for w in recwarn if w.category is FutureWarning]
 
 
+def test_nouvelle_variable_vide_vaut_absente(tmp_path: Path) -> None:
+    """Comme les installeurs (`${VAR:-}`) : vide, la nouvelle variable laisse place à l'ancienne."""
+    from devsecops_dojo import config
+
+    config._LEGACY_WARNED.discard("WDS_DATA_DIR")
+    with pytest.warns(FutureWarning):
+        settings = Settings.from_env({"DEVSECOPS_DOJO_DATA_DIR": "", "WDS_DATA_DIR": str(tmp_path)})
+    assert settings.data_dir == tmp_path
+    assert Settings.from_env({"DEVSECOPS_DOJO_DATA_DIR": "", "WDS_DATA_DIR": ""}).data_dir is None
+
+
 def _legacy_tree(root: Path) -> Path:
     legacy = root / "WaveDevSecOps"
     (legacy / "workspaces").mkdir(parents=True)
@@ -65,6 +76,7 @@ def _legacy_tree(root: Path) -> Path:
     (legacy / "workspaces" / "x.txt").write_text("x", encoding="utf-8")
     (legacy / "app").mkdir()
     (legacy / "app" / "old.txt").write_text("clone", encoding="utf-8")
+    (legacy / "app.lock").write_text("http://127.0.0.1:1/", encoding="utf-8")
     return legacy
 
 
@@ -78,6 +90,7 @@ def test_migration_copie_sans_toucher_l_ancien(tmp_path: Path) -> None:
     assert (target / "progress.json").read_text(encoding="utf-8") == '{"a": 1}'
     assert (target / "workspaces" / "x.txt").read_text(encoding="utf-8") == "x"
     assert not (target / "app").exists()
+    assert not (target / "app.lock").exists()  # verrou de l'ancienne instance, pas une donnée
     assert (legacy / "progress.json").exists() and (legacy / "app" / "old.txt").exists()
     assert not list(tmp_path.glob("*.migration-*"))
     # Seconde exécution : le nouveau existe, rien ne se passe.

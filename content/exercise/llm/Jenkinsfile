@@ -1,13 +1,13 @@
 // Pipeline du projet en Jenkins (syntaxe déclarative). Le même pipeline s'écrit dans
 // « .github/workflows/ci.yml » (GitHub Actions) et dans « .gitlab-ci.yml » (GitLab CI) : sept
 // tâches, l'une après l'autre.
-// Les commentaires « wds:job » et « wds:end » encadrent chaque tâche : DevSecOps Dojo s'en sert pour
+// Les commentaires « dojo:job » et « dojo:end » encadrent chaque tâche : DevSecOps Dojo s'en sert pour
 // surligner ses lignes. Ce fichier se lit, il ne s'exécute pas dans DevSecOps Dojo.
 pipeline {
     agent any
 
     stages {
-        // wds:job ruff
+        // dojo:job ruff
         stage('Lint (ruff)') {
             steps {
                 // uv doit être installé sur l'agent (GitHub Actions et GitLab CI l'installent).
@@ -15,9 +15,9 @@ pipeline {
                 sh 'uv run ruff check .'
             }
         }
-        // wds:end
+        // dojo:end
 
-        // wds:job pytest
+        // dojo:job pytest
         stage('Tests (pytest)') {
             steps {
                 // uv doit être installé sur l'agent (GitHub Actions et GitLab CI l'installent).
@@ -25,9 +25,9 @@ pipeline {
                 sh 'uv run pytest -q --tb=short'
             }
         }
-        // wds:end
+        // dojo:end
 
-        // wds:job gitleaks
+        // dojo:job gitleaks
         stage('Secrets (gitleaks)') {
             steps {
                 // gitleaks doit être installé sur l'agent qui exécute la tâche.
@@ -35,9 +35,9 @@ pipeline {
                 sh "gitleaks dir --no-banner --redact --exit-code 3 --ignore-gitleaks-allow --config '{config}/gitleaks.toml' ."
             }
         }
-        // wds:end
+        // dojo:end
 
-        // wds:job bandit
+        // dojo:job bandit
         stage('Analyse de sécurité (bandit)') {
             steps {
                 // uv doit être installé sur l'agent (GitHub Actions et GitLab CI l'installent).
@@ -47,9 +47,9 @@ pipeline {
                 sh "uv run bandit -r src -q --ignore-nosec --ini '{config}/bandit.ini'"
             }
         }
-        // wds:end
+        // dojo:end
 
-        // wds:job pip_audit
+        // dojo:job pip_audit
         stage('Dépendances (pip-audit)') {
             steps {
                 // uv doit être installé sur l'agent (GitHub Actions et GitLab CI l'installent).
@@ -58,9 +58,9 @@ pipeline {
                 sh "uv run pip-audit --vulnerability-service osv --osv-url '{osv_url}' --no-deps --disable-pip --progress-spinner off -r requirements.txt"
             }
         }
-        // wds:end
+        // dojo:end
 
-        // wds:job uv_lock
+        // dojo:job uv_lock
         stage('Verrou des dépendances (uv)') {
             steps {
                 // uv doit être installé sur l'agent (GitHub Actions et GitLab CI l'installent).
@@ -68,9 +68,9 @@ pipeline {
                 sh 'uv lock --check'
             }
         }
-        // wds:end
+        // dojo:end
 
-        // wds:job quality_gate
+        // dojo:job quality_gate
         stage('Couverture du nouveau code (quality gate)') {
             steps {
                 // uv doit être installé sur l'agent (GitHub Actions et GitLab CI l'installent).
@@ -81,6 +81,6 @@ pipeline {
                 sh "uv run diff-cover '{reports}/coverage.xml' '--compare-branch={base_sha}' --fail-under=80"
             }
         }
-        // wds:end
+        // dojo:end
     }
 }

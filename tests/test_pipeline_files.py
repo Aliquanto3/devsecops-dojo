@@ -1,4 +1,4 @@
-"""Les trois écritures du pipeline (Story 7.6, AD-10) : balises `wds:job` / `wds:end` dans le
+"""Les trois écritures du pipeline (Story 7.6, AD-10) : balises `dojo:job` / `dojo:end` dans le
 gabarit, plages de lignes tirées du SHA de tête, constats non bloquants, rien ne s'exécute.
 
 Le test central relit `content/pipeline.yaml` : chaque tâche du pipeline simulé doit se retrouver
@@ -84,7 +84,7 @@ def _contract(track: str, file: pf.PipelineFile, findings: object) -> str:
         f"(attendu, dans cet ordre : {', '.join(PIPELINE.job_ids)}). Chaque job de "
         "pipeline.yaml s'écrit dans les 6 fichiers CI des gabarits (no_ai et llm : "
         ".github/workflows/ci.yml, Jenkinsfile, .gitlab-ci.yml), encadré par "
-        "« wds:job <job_id> » et « wds:end », chacun en commentaire seul sur sa ligne, avec son "
+        "« dojo:job <job_id> » et « dojo:end », chacun en commentaire seul sur sa ligne, avec son "
         f"label_text et la commande « outil + human » de pipeline.yaml. Constats : {findings}"
     )
 
@@ -153,23 +153,30 @@ def test_les_trois_gabarits_sont_identiques_entre_parcours() -> None:
 
 
 def test_les_balises_ne_sont_pas_reconnues_dans_une_phrase() -> None:
-    """L'en-tête des fichiers cite « wds:job » et « wds:end » sans les ouvrir."""
-    text = "# Les commentaires « wds:job » et « wds:end » encadrent chaque tâche.\n"
+    """L'en-tête des fichiers cite « dojo:job » et « dojo:end » sans les ouvrir."""
+    text = "# Les commentaires « dojo:job » et « dojo:end » encadrent chaque tâche.\n"
     found = pf.job_ranges(FILES["github"], text, [])
     assert found.ranges == {} and found.findings == []
 
 
 # ------------------------------------------------------------------ plages et constats
 def test_plages_sans_les_balises_et_texte_d_affichage() -> None:
-    text = "a\n# wds:job ruff\nb\nc\n# wds:end\n// wds:job pytest\nd\n// wds:end\ne\n"
+    text = "a\n# dojo:job ruff\nb\nc\n# dojo:end\n// dojo:job pytest\nd\n// dojo:end\ne\n"
     found = pf.job_ranges(FILES["github"], text, ["ruff", "pytest"])
     assert found.findings == []
     assert found.ranges["ruff"] == pf.JobRange(3, 4) and found.ranges["ruff"].text == "lignes 3 à 4"
     assert found.ranges["pytest"].text == "ligne 7"
 
 
+def test_ancienne_forme_des_balises_encore_lue() -> None:
+    """Fichiers d'un espace créé avant le renommage : `wds:job` / `wds:end`."""
+    text = "a\n# wds:job ruff\nb\n# wds:end\n"
+    found = pf.job_ranges(FILES["github"], text, ["ruff"])
+    assert found.findings == [] and found.ranges["ruff"] == pf.JobRange(3, 3)
+
+
 def test_crlf_et_balise_indentee() -> None:
-    text = "x\r\n  # wds:job ruff\r\nb\r\n  # wds:end\r\n"
+    text = "x\r\n  # dojo:job ruff\r\nb\r\n  # dojo:end\r\n"
     found = pf.job_ranges(FILES["github"], text.replace("\r\n", "\n"), ["ruff"])
     assert found.ranges["ruff"] == pf.JobRange(3, 3)
 
@@ -178,12 +185,12 @@ def test_crlf_et_balise_indentee() -> None:
     ("text", "rule", "kept"),
     [
         ("sans balise\n", pf.MARK_MISSING_RULE, []),
-        ("# wds:job ruff\nb\n", pf.MARK_BROKEN_RULE, []),  # jamais fermée
-        ("b\n# wds:end\n", pf.MARK_BROKEN_RULE, []),  # fermeture sans ouverture
-        ("# wds:job ruff\n# wds:end\n", pf.MARK_BROKEN_RULE, []),  # tâche vide
-        ("# wds:job ruff\nb\n# wds:job pytest\nc\n# wds:end\n", pf.MARK_BROKEN_RULE, ["pytest"]),
+        ("# dojo:job ruff\nb\n", pf.MARK_BROKEN_RULE, []),  # jamais fermée
+        ("b\n# dojo:end\n", pf.MARK_BROKEN_RULE, []),  # fermeture sans ouverture
+        ("# dojo:job ruff\n# dojo:end\n", pf.MARK_BROKEN_RULE, []),  # tâche vide
+        ("# dojo:job ruff\nb\n# dojo:job pytest\nc\n# dojo:end\n", pf.MARK_BROKEN_RULE, ["pytest"]),
         (
-            "# wds:job ruff\nb\n# wds:end\n# wds:job ruff\nc\n# wds:end\n",
+            "# dojo:job ruff\nb\n# dojo:end\n# dojo:job ruff\nc\n# dojo:end\n",
             pf.MARK_BROKEN_RULE,
             ["ruff"],
         ),
@@ -201,7 +208,7 @@ def test_balise_absente_ou_mal_formee_donne_un_constat_jamais_une_exception(
 
 
 def test_une_tache_sans_balise_est_signalee_dans_le_fichier_concerne() -> None:
-    found = pf.job_ranges(FILES["gitlab"], "# wds:job ruff\nx\n# wds:end\n", ["ruff", "pytest"])
+    found = pf.job_ranges(FILES["gitlab"], "# dojo:job ruff\nx\n# dojo:end\n", ["ruff", "pytest"])
     [missing] = [f for f in found.findings if f.rule_id == pf.MARK_MISSING_RULE]
     assert "pytest" in missing.message_text and missing.path == ".gitlab-ci.yml"
     assert "ruff" in found.ranges
@@ -247,7 +254,7 @@ def test_balises_absentes_sur_le_sha_de_tete_donnent_un_constat_non_bloquant(
     broken = (
         '  - op: write_file\n    path: Jenkinsfile\n    content: "pipeline { agent any }\\n"\n'
         "  - op: write_file\n    path: .gitlab-ci.yml\n"
-        '    content: "# wds:job ruff\\nruff:\\n  script: [x]\\n# wds:end\\n"'
+        '    content: "# dojo:job ruff\\nruff:\\n  script: [x]\\n# dojo:end\\n"'
     )
     layout, git, _ = _prepare(tmp_path, git_path, broken)
     view = pipeline_view(git, layout, PIPELINE, 1)  # aucune exception

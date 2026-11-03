@@ -19,7 +19,12 @@ from pathlib import Path
 from typing import Literal
 
 from devsecops_dojo import procs
-from devsecops_dojo.config import Settings, get_settings, inherited_environment
+from devsecops_dojo.config import (
+    LEGACY_NETGUARD_VARIABLE,
+    Settings,
+    get_settings,
+    inherited_environment,
+)
 from devsecops_dojo.registry import (
     Family,
     Tool,
@@ -36,7 +41,7 @@ Handle = procs.Handle
 PROXY_NAMES = ("http_proxy", "https_proxy", "all_proxy")
 LOOPBACK_NO_PROXY = "127.0.0.1,localhost"
 NETGUARD_VARIABLE = "DEVSECOPS_DOJO_NETGUARD"
-NETGUARD_MODULE = "_wds_netguard"
+NETGUARD_MODULE = "_devsecops_dojo_netguard"
 
 # Garde réseau posée dans chaque environnement d'exercice (AD-12, AD-13) : un `.pth` l'importe
 # au démarrage de tout Python du venv (outils, tests du gabarit).
@@ -85,7 +90,7 @@ def _refuse(what):
     raise PermissionError("DevSecOps Dojo : " + what + " refusée, l'exercice tourne hors ligne")
 
 
-def _wds_netguard(event, args):
+def _netguard(event, args):
     if event in _RESOLUTION:
         host = args[0] if args else None
         if host in (None, "", b""):
@@ -105,7 +110,7 @@ def _wds_netguard(event, args):
 
 
 if os.environ.get("DEVSECOPS_DOJO_NETGUARD") == "1":
-    sys.addaudithook(_wds_netguard)
+    sys.addaudithook(_netguard)
 '''
 
 
@@ -166,6 +171,7 @@ def offline_environment(
         UV_NO_PROGRESS="1",
     )
     env[NETGUARD_VARIABLE] = "1"
+    env[LEGACY_NETGUARD_VARIABLE] = "1"  # environnements créés avant le renommage
     return env
 
 

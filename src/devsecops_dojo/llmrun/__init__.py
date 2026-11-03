@@ -87,6 +87,7 @@ def exercise_environment(
     base = {k: v for k, v in inherited_environment().items() if k.upper() in PASSED_VARIABLES}
     env = toolrun.offline_environment(settings, base)
     env.pop(toolrun.NETGUARD_VARIABLE, None)
+    env.pop(toolrun.LEGACY_NETGUARD_VARIABLE, None)
     for name in [n for n in env if n.upper() in {"HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY"}]:
         del env[name]
     for name in [n for n in env if n.upper() == "NO_PROXY"]:

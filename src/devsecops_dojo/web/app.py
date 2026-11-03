@@ -43,7 +43,7 @@ from devsecops_dojo.web.glossary import install_glossary_routes
 from devsecops_dojo.web.shell import CURRENT_MILESTONE, delivered_surfaces, track_options
 from devsecops_dojo.web.workspaces import install_workspace_routes
 
-SESSION_COOKIE = "wds_session"
+SESSION_COOKIE = "devsecops_dojo_session"
 PUBLIC_PREFIX = "/osv/"
 
 _HOST_REFUSED = (

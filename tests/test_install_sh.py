@@ -494,12 +494,13 @@ def test_migration_de_l_ancien_dossier_de_donnees(tmp_path: Path) -> None:
     old = tmp_path / "WaveDevSecOps"
     (old / "app").mkdir(parents=True)
     (old / "progress.json").write_text("{}", encoding="utf-8")
+    (old / "app.lock").write_text("verrou", encoding="utf-8")
     new = tmp_path / "DevSecOpsDojo"
     code = f"DATA_DIR='{new}'; migrate_legacy_data; migrate_legacy_data"
     # Variable DEVSECOPS_DOJO_DATA_DIR absente de l'environnement : la migration est permise.
     _lib(code, None)
     assert (new / "progress.json").read_text(encoding="utf-8") == "{}"
-    assert not (new / "app").exists()
+    assert not (new / "app").exists() and not (new / "app.lock").exists()
     assert (old / "progress.json").exists() and (old / "app").is_dir()
 
 

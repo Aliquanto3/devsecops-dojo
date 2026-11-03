@@ -204,6 +204,8 @@ def test_environnement_hors_ligne_story_7_1(
     assert env["no_proxy"] == "127.0.0.1,localhost" and env["UV_PYTHON_DOWNLOADS"] == "never"
     assert Path(env["UV_PYTHON_INSTALL_DIR"]) == tmp_path / "uv-cache" / "python"
     assert env["DEVSECOPS_DOJO_NETGUARD"] == "1"
+    # Environnements copiés par la migration : leur garde `_wds_netguard` lit l'ancien nom.
+    assert env["WDS_NETGUARD"] == "1"
     for name in ("RUFF_CACHE_DIR", "COVERAGE_FILE", "PRE_COMMIT_HOME"):
         assert Path(env[name]).parent == tmp_path / "cache"
 
@@ -234,7 +236,7 @@ def test_sync_environment_hors_ligne(tmp_path: Path, monkeypatch: pytest.MonkeyP
     assert env["UV_CACHE_DIR"] == str(tmp_path / "data" / "uv-cache")
     site = toolrun.site_packages(venv)
     assert site is not None
-    assert (site / "_wds_netguard.pth").read_text("utf-8").strip() == "import _wds_netguard"
+    assert (site / "_devsecops_dojo_netguard.pth").read_text("utf-8").strip() == "import _devsecops_dojo_netguard"
     # Sans uv utilisable, aucune exception : l'erreur est rendue.
     monkeypatch.setattr(
         toolrun, "resolve", lambda *a, **k: toolrun.ToolStatus("uv", "missing", reason="absent")
@@ -343,7 +345,7 @@ def test_garde_reseau_loopback_strict(event: str, args: tuple, permis: bool) -> 
         toolrun.NETGUARD_SOURCE.replace('os.environ.get("DEVSECOPS_DOJO_NETGUARD")', "None"),
         namespace,
     )
-    hook = namespace["_wds_netguard"]
+    hook = namespace["_netguard"]
     if permis:
         hook(event, args)  # type: ignore[operator]
     else:

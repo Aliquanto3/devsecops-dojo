@@ -32,6 +32,7 @@ def test_environnement_du_code_d_exercice(tmp_path: Path) -> None:
     assert offline[toolrun.NETGUARD_VARIABLE] == "1"  # les outils restent sous la garde
     env = llmrun.exercise_environment(settings, PROXIES)
     assert toolrun.NETGUARD_VARIABLE not in env  # llmrun seul lance sans la garde réseau
+    assert toolrun.LEGACY_NETGUARD_VARIABLE not in env
     assert env["HTTPS_PROXY"] == PROXIES["HTTPS_PROXY"]
     assert env["HTTP_PROXY"] == PROXIES["http_proxy"]  # casse ignorée à la lecture
     # La boucle locale (Ollama) reste hors proxy, l'exclusion de l'apprenant est gardée.

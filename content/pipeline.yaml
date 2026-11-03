@@ -10,7 +10,7 @@
 #
 # Tout job ajouté ici s'écrit aussi, à la même place dans l'ordre, dans les 6 fichiers CI des
 # gabarits (content/exercise/{no_ai,llm}/ : .github/workflows/ci.yml, Jenkinsfile,
-# .gitlab-ci.yml), encadré par « wds:job <job_id> » et « wds:end » en commentaires seuls sur
+# .gitlab-ci.yml), encadré par « dojo:job <job_id> » et « dojo:end » en commentaires seuls sur
 # leur ligne, avec son label_text et la commande « tool + human » (story 7.6,
 # tests/test_pipeline_files.py), puis `uv run python scripts/update_fingerprints.py`.
 #

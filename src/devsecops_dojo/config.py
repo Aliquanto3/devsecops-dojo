@@ -30,6 +30,12 @@ ENV_PREFIX = "DEVSECOPS_DOJO_"
 APP_NAME = "DevSecOpsDojo"
 LEGACY_ENV_PREFIX = "WDS_"
 LEGACY_APP_NAME = "WaveDevSecOps"
+LEGACY_SKIPPED = ("app", "app.lock")
+"""Entrées de l'ancien dossier non copiées : `app/` (réinstallé) et `app.lock` (verrou de
+l'instance en cours, propre à l'ancien dossier)."""
+LEGACY_NETGUARD_VARIABLE = "WDS_NETGUARD"
+"""Variable lue par la garde réseau des environnements d'exercice créés avant le renommage
+(`_wds_netguard`, copiés par la migration) : posée avec la nouvelle pour qu'ils restent gardés."""
 _LEGACY_WARNED: set[str] = set()
 PROXY_VARIABLES = ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "UV_SYSTEM_CERTS")
 
@@ -157,11 +163,15 @@ class Settings(BaseModel):
         for name in cls.model_fields:
             key = ENV_PREFIX + name.upper()
             legacy_key = LEGACY_ENV_PREFIX + name.upper()
-            if key in source:
+            # Vide vaut absente, comme dans les installeurs (`${VAR:-}`) : l'ancienne variable
+            # sert alors de repli, puis le défaut.
+            if source.get(key):
                 values[name] = source[key]
-            elif legacy_key in source:
+            elif source.get(legacy_key):
                 _warn_legacy_variable(legacy_key, key)
                 values[name] = source[legacy_key]
+            elif key in source:
+                values[name] = source[key]
         return cls.model_validate(values)
 
 
@@ -187,9 +197,10 @@ def migrate_legacy_data_dir(settings: Settings, legacy: Path | None = None) -> b
 
     Rien si l'utilisateur a choisi son dossier (`data_dir`), si le nouveau existe déjà ou si
     l'ancien est absent. Le sous-dossier `app/` (clone et environnement de l'ancien installeur)
-    n'est pas copié. La copie passe par un dossier de travail propre au processus puis un
-    renommage : un échec (`OSError` : verrou Windows, disque plein, lancement concurrent) ne
-    bloque jamais le démarrage, laisse l'ancien dossier intact et émet un avertissement.
+    et le verrou `app.lock` ne sont pas copiés. La copie passe par un dossier de travail propre
+    au processus puis un renommage : un échec (`OSError` : verrou Windows, disque plein,
+    lancement concurrent) ne bloque jamais le démarrage, laisse l'ancien dossier intact et émet
+    un avertissement.
     Renvoie vrai si la copie a eu lieu.
     """
     if settings.data_dir is not None:
@@ -201,7 +212,7 @@ def migrate_legacy_data_dir(settings: Settings, legacy: Path | None = None) -> b
     staging = target.with_name(f"{target.name}.migration-{os.getpid()}")
 
     def ignore(directory: str, names: list[str]) -> set[str]:
-        return {"app"} & set(names) if Path(directory) == source else set()
+        return set(LEGACY_SKIPPED) & set(names) if Path(directory) == source else set()
 
     try:
         shutil.rmtree(staging, ignore_errors=True)
