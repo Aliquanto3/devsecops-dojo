@@ -1,6 +1,6 @@
 [project]
 name = "devsecops-dojo"
-version = "0.2.0"
+version = "0.2.1"
 description = "Application pédagogique locale pour apprendre git, GitHub, la CI/CD et le DevSecOps, hors ligne."
 readme = "README.md"
 license = "Apache-2.0"

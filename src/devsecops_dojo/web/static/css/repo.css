@@ -112,7 +112,7 @@
 }
 
 .graph-edge.is-lost {
-  stroke: var(--color-muted);
+  stroke: var(--color-line-strong);
   stroke-dasharray: 4 3;
 }
 
@@ -124,7 +124,7 @@
 
 .graph-commit.is-lost {
   fill: var(--color-surface);
-  stroke: var(--color-muted);
+  stroke: var(--color-line-strong);
   stroke-dasharray: 3 2;
 }
 
@@ -286,7 +286,7 @@
 .staging-group {
   padding: var(--space-2);
   background: var(--color-surface-raised);
-  border: var(--stroke-min) solid var(--color-muted);
+  border: var(--stroke-min) solid var(--color-line-strong);
   border-radius: var(--radius-md);
 }
 

@@ -17,7 +17,7 @@ import pytest
 from static_rules import STATIC
 from test_projections import FREE, Sandbox
 from test_shell_js import NODE, _run
-from test_shell_ui import CONTRAST_PAIRS, _blocks, _palette, _ratio
+from test_shell_ui import CONTRAST_PAIRS, _palettes, _ratio
 
 from devsecops_dojo.config import Settings
 from devsecops_dojo.engine import prepare_workspace
@@ -441,10 +441,7 @@ REPO_PAIRS = (
 
 @pytest.mark.parametrize("theme", ["clair", "sombre"])
 def test_contrastes_du_graphe_et_de_l_index(theme: str) -> None:
-    light, _media, forced = _blocks((CSS / "tokens.css").read_text(encoding="utf-8"))
-    palette = _palette(light)
-    if theme == "sombre":
-        palette |= _palette(forced)
+    palette = _palettes((CSS / "tokens.css").read_text(encoding="utf-8"))[theme]
     low = [
         f"{fg}/{bg} {_ratio(palette[fg], palette[bg]):.2f} < {minimum}"
         for fg, bg, minimum in REPO_PAIRS

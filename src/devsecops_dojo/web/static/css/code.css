@@ -74,7 +74,7 @@
   font: var(--font-weight-label) var(--font-size-label) / 1 var(--font-family-label);
   color: var(--color-ink);
   background: var(--color-surface-raised);
-  border: var(--stroke-min) solid var(--color-muted);
+  border: var(--stroke-min) solid var(--color-line-strong);
   border-radius: var(--radius-full);
   cursor: pointer;
 }
@@ -143,7 +143,7 @@
   height: 16em;
   min-height: 8em;
   background: var(--color-surface-raised);
-  border: var(--stroke-min) solid var(--color-muted);
+  border: var(--stroke-min) solid var(--color-line-strong);
   border-radius: var(--radius-sm);
   overflow: hidden;
 }
@@ -269,7 +269,7 @@
 .diff-file-header:focus-visible,
 .diff-line:focus-visible,
 .code-file:focus-visible {
-  outline: calc(var(--stroke-min) * 2) solid var(--color-primary);
+  outline: calc(var(--stroke-min) * 2) solid var(--color-focus);
   outline-offset: -2px;
 }
 
@@ -315,7 +315,7 @@
   font: var(--font-weight-label) var(--font-size-label) / 1.4 var(--font-family-label);
   color: var(--color-ink);
   background: var(--color-surface-raised);
-  border: var(--stroke-min) solid var(--color-muted);
+  border: var(--stroke-min) solid var(--color-line-strong);
   border-radius: var(--radius-full);
 }
 
@@ -342,7 +342,7 @@
   font: var(--font-weight-label) var(--font-size-label) / 1 var(--font-family-label);
   color: var(--color-ink);
   background: var(--color-surface-raised);
-  border: var(--stroke-min) solid var(--color-muted);
+  border: var(--stroke-min) solid var(--color-line-strong);
   border-radius: var(--radius-full);
   cursor: pointer;
 }
@@ -360,7 +360,7 @@
 .pipeline-job:focus-visible,
 .pipeline-tab:focus-visible,
 .pipeline-lines:focus-visible {
-  outline: calc(var(--stroke-min) * 2) solid var(--color-primary);
+  outline: calc(var(--stroke-min) * 2) solid var(--color-focus);
   outline-offset: 2px;
 }
 

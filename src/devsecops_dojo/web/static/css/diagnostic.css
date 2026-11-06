@@ -141,7 +141,7 @@
   margin: 0 0 var(--space-4);
   padding: var(--space-3) var(--space-4);
   background: var(--color-surface-raised);
-  border: var(--stroke-min) solid var(--color-muted);
+  border: var(--stroke-min) solid var(--color-line-strong);
   border-left-width: 4px;
   border-radius: var(--radius-md);
 }

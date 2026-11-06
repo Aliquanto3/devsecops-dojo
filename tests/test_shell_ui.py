@@ -137,7 +137,7 @@ def test_point_de_vie_sous_cookie(instance: cli.Instance, cookie: dict[str, str]
 
 
 def test_fichiers_statiques_sous_cookie(instance: cli.Instance, cookie: dict[str, str]) -> None:
-    paths = ("/static/css/tokens.css", "/static/js/main.js", "/static/fonts/fredoka-variable.woff2")
+    paths = ("/static/css/tokens.css", "/static/js/main.js", "/static/fonts/sora-600.woff2")
     for path in paths:
         refused, _ = get(instance, path)
         assert refused.status == 401
@@ -182,7 +182,7 @@ def test_la_page_et_les_feuilles_ne_chargent_que_du_local(
 
 def test_polices_woff2_locales_et_licences(instance: cli.Instance, cookie: dict[str, str]) -> None:
     fonts = STATIC / "fonts"
-    families = ("fredoka", "atkinson-hyperlegible", "jetbrains-mono")
+    families = ("sora", "atkinson-hyperlegible", "jetbrains-mono")
     for family in families:
         files = list(fonts.glob(f"{family}-*.woff2"))
         assert files, family
@@ -195,57 +195,74 @@ def test_polices_woff2_locales_et_licences(instance: cli.Instance, cookie: dict[
             "Content-Type", ""
         )
     face = (CSS / "fonts.css").read_text(encoding="utf-8")
-    for name in ("Fredoka", "Atkinson Hyperlegible", "JetBrains Mono"):
+    for name in ("Sora", "Atkinson Hyperlegible", "JetBrains Mono"):
         assert f'font-family: "{name}"' in face
 
 
-# --- jetons de DESIGN.md --------------------------------------------------------------------
+# --- jetons : valeurs de la charte générique v2.1 ---------------------------------------------
 
 
 def _blocks(css: str) -> tuple[str, str, str]:
-    start_media = css.index("@media (prefers-color-scheme: dark)")
-    start_forced = css.index(':root[data-theme="dark"]')
-    light = css[:start_media]
-    media = css[start_media:start_forced]
-    forced = css[start_forced:]
-    return light, media, forced
+    """Bloc sombre (`:root`), bloc clair du système, bloc clair forcé (sombre d'abord)."""
+    start_media = css.index("@media (prefers-color-scheme: light)")
+    start_forced = css.index(':root[data-theme="light"]')
+    start_dark = css.index(':root[data-theme="dark"]')
+    return css[:start_media], css[start_media:start_forced], css[start_forced:start_dark]
 
 
-def test_tous_les_jetons_de_couleur_sont_des_proprietes_css() -> None:
-    light, media, forced = _blocks((CSS / "tokens.css").read_text(encoding="utf-8"))
-    colors = design_colors()
-    assert {"terminal-bg", "focus-on-ink", "terminal-lit-ring"} <= colors.keys()
-    for name, value in colors.items():
-        base = name.removesuffix("-dark")
-        declaration = f"--color-{base}: {value};"
-        if name.endswith("-dark"):
-            assert declaration in media, name
-            assert declaration in forced, name
-        else:
-            assert declaration in light, name
+def _palettes(css: str) -> dict[str, dict[str, str]]:
+    """Palette complète de chaque thème : le clair complète le sombre de `:root`."""
+    dark, media, forced = _blocks(css)
+    base = _palette(dark)
+    light = base | _palette(forced)
+    assert _palette(media) == _palette(forced)  # même clair par le système et par le choix
+    return {"sombre": base, "clair": light}
+
+
+def test_tous_les_jetons_de_couleur_sont_dans_les_deux_themes() -> None:
+    css = (CSS / "tokens.css").read_text(encoding="utf-8")
+    dark, media, forced = _blocks(css)
+    names = set(_palette(dark))
+    assert {"terminal-bg", "focus-on-ink", "terminal-lit-ring", "button", "line-strong"} <= names
+    terminal = {n for n in names if n.startswith("terminal-")}
+    # Le terminal reste sombre dans les deux thèmes : il n'est redéfini que dans `:root`.
+    assert set(_palette(forced)) == names - terminal
+    assert set(_palette(media)) == names - terminal
+    forced_dark = css[css.index(':root[data-theme="dark"]') :]
+    assert set(_palette(forced_dark)) == names - terminal
 
 
 def test_theme_sombre_selon_le_systeme_ou_le_choix() -> None:
     css = (CSS / "tokens.css").read_text(encoding="utf-8")
-    assert ':root:not([data-theme="light"])' in css
+    assert ':root:not([data-theme="dark"])' in css
+    assert ':root[data-theme="light"]' in css
     assert ':root[data-theme="dark"]' in css
+    assert css.index("color-scheme: dark") < css.index("@media (prefers-color-scheme: light)")
 
 
-def test_typographie_espacements_arrondis_relief() -> None:
+def test_typographie_espacements_arrondis() -> None:
     front = yaml.safe_load(DESIGN.read_text(encoding="utf-8").split("---")[1])
     css = (CSS / "tokens.css").read_text(encoding="utf-8")
     for role, spec in front["typography"].items():
-        assert f"--font-family-{role}: {spec['fontFamily']};" in css
         assert f"--font-size-{role}: {spec['fontSize']};" in css
         assert int(spec["fontSize"].removesuffix("px")) >= 12, role
+    for role in ("pane-title", "heading"):  # titres en Sora 600, le reste en Atkinson ou JetBrains
+        assert f"--font-family-{role}: Sora, system-ui," in css
+    for role in ("body", "chat", "label", "number"):
+        assert f"--font-family-{role}: 'Atkinson Hyperlegible', system-ui," in css
+    assert "--font-family-code: 'JetBrains Mono'," in css
     for name, value in front["rounded"].items():
         assert f"--radius-{name}: {value};" in css
     for name, value in front["spacing"].items():
+        if name.startswith(
+            "relief"
+        ):  # décalages du relief dur : remplacés par le halo de la charte
+            assert f"--{name}:" not in css, name
+            continue
         prop = f"--space-{name}" if name.isdigit() else f"--{name}"
         assert f"{prop}: {value};" in css, name
     assert "--scenario-panel-width: 440px;" in css
-    for relief in ("--shadow-relief:", "--shadow-primary:", "--shadow-relief-overlay:"):
-        assert relief in css
+    assert "--shadow-relief: var(--halo);" in css  # plus d'ombre dure : halo doux de la charte
 
 
 def test_aucun_texte_sous_12_px_et_aucune_opacite_sur_le_texte() -> None:
@@ -356,16 +373,14 @@ def _palette(block: str) -> dict[str, str]:
 
 
 def test_formule_de_contraste_wcag() -> None:
-    assert _ratio("#000000", "#FFFFFF") == pytest.approx(21.0)
-    assert _ratio("#777777", "#FFFFFF") == pytest.approx(4.48, abs=0.01)
+    assert _ratio("#FFFFFF", "#FFFFFF") == pytest.approx(1.0)
+    assert _ratio("#121821", "#FFFFFF") == pytest.approx(_ratio("#FFFFFF", "#121821"))
+    assert _ratio("#E8ECF2", "#0F1318") == pytest.approx(15.72, abs=0.01)
 
 
 @pytest.mark.parametrize("theme", ["clair", "sombre"])
 def test_contrastes_des_paires_texte_fond(theme: str) -> None:
-    light, _media, forced = _blocks((CSS / "tokens.css").read_text(encoding="utf-8"))
-    palette = _palette(light)
-    if theme == "sombre":
-        palette |= _palette(forced)
+    palette = _palettes((CSS / "tokens.css").read_text(encoding="utf-8"))[theme]
     low = [
         f"{fg}/{bg} {_ratio(palette[fg], palette[bg]):.2f} < {minimum}"
         for fg, bg, minimum in CONTRAST_PAIRS

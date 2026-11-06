@@ -149,14 +149,20 @@ _TEMPLATE = """<!doctype html>
 <title>{{ r.title }}</title>
 <style>
 {{ font_css|safe }}
-:root { color-scheme: light dark; --ink: #1d2433; --bg: #fff; --line: #9aa3b5; --soft: #eef1f7; }
-@media (prefers-color-scheme: dark) {
-  :root { --ink: #eef1f7; --bg: #161b27; --line: #5b6579; --soft: #232a3a; }
+:root { color-scheme: light dark; --ink: #E8ECF2; --bg: #0F1318; --line: #67717E; --soft: #1E242C; }
+@media (prefers-color-scheme: light) {
+  :root { --ink: #121821; --bg: #F6F8FB; --line: #808A97; --soft: #ECF0F5; }
 }
-@media print { :root { --ink: #1d2433; --bg: #fff; --line: #9aa3b5; --soft: #eef1f7; } }
+@media print { :root { --ink: #121821; --bg: #FFFFFF; --line: #808A97; --soft: #ECF0F5; } }
 body { margin: 0 auto; max-width: 60rem; padding: 1.5rem 1rem; color: var(--ink);
-  background: var(--bg); font: 1rem/1.5 "Atkinson Hyperlegible", system-ui, sans-serif; }
+  background: var(--bg);
+  font: 1rem/1.5 "Atkinson Hyperlegible", system-ui, 'Segoe UI', Roboto, sans-serif; }
+h1, h2 { font-family: Sora, system-ui, 'Segoe UI', Roboto, sans-serif; font-weight: 600; }
 h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+h1::after { content: ""; display: block; width: 96px; height: 4px; margin-top: .5rem;
+  border-radius: 999px; background: #E3C26B; }
+@media (prefers-color-scheme: light) { h1::after { background: #8F6300; } }
+@media print { h1::after { background: #8F6300; } }
 h2 { font-size: 1.2rem; margin: 2rem 0 .5rem; }
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: .4rem .6rem; border: 1px solid var(--line); }

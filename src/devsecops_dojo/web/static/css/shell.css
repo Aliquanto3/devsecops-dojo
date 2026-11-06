@@ -48,7 +48,7 @@ body {
 }
 
 :focus-visible {
-  outline: var(--focus-ring-width) solid var(--color-primary);
+  outline: var(--focus-ring-width) solid var(--color-focus);
   outline-offset: var(--focus-ring-offset);
 }
 
@@ -184,7 +184,7 @@ body {
   font: var(--font-weight-label) var(--font-size-label) / 1 var(--font-family-label);
   color: var(--color-ink);
   background: var(--color-surface-raised);
-  border: 2px solid var(--color-muted);
+  border: 2px solid var(--color-line-strong);
   border-radius: var(--radius-md);
   cursor: pointer;
 }
@@ -223,7 +223,7 @@ body {
   font-size: var(--font-size-body);
   color: var(--color-ink);
   background: var(--color-surface-raised);
-  border: 2px solid var(--color-muted);
+  border: 2px solid var(--color-line-strong);
   border-radius: var(--radius-sm);
 }
 
@@ -255,6 +255,17 @@ main h1 {
   margin: 0 0 var(--space-1);
   font: var(--font-weight-pane-title) var(--font-size-pane-title) / var(--line-height-pane-title)
     var(--font-family-pane-title);
+}
+
+/* Filet or de la charte sous le titre de la page (96 x 4 px, bout arrondi). */
+main h1::after {
+  content: "";
+  display: block;
+  width: 96px;
+  height: 4px;
+  margin-top: var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-rule);
 }
 
 .subtitle {
@@ -331,27 +342,24 @@ main h1 {
 }
 
 .btn-primary {
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  box-shadow: var(--shadow-primary);
+  background: var(--color-button);
+  color: var(--color-on-button);
 }
 
-.btn-primary:active {
-  transform: translateY(calc(var(--relief-offset) - var(--relief-offset-pressed)));
-  box-shadow: var(--shadow-primary-pressed);
+.btn-primary:hover {
+  background: var(--color-button-hover);
 }
 
 .btn-secondary {
   background: var(--color-surface-raised);
-  color: var(--color-primary);
-  border-color: var(--color-primary);
-  box-shadow: var(--shadow-relief-active);
+  color: var(--color-ink);
+  border-color: var(--color-line-strong);
 }
 
 .btn-reset {
   background: var(--color-surface-raised);
   color: var(--color-ink);
-  border-color: var(--color-muted);
+  border-color: var(--color-line-strong);
 }
 
 .btn-danger {
@@ -363,7 +371,7 @@ main h1 {
 .btn[aria-disabled="true"] {
   background: var(--color-discipline-neutral-soft);
   color: var(--color-ink-soft);
-  border: 2px dashed var(--color-muted);
+  border: 2px dashed var(--color-line-strong);
   box-shadow: none;
   cursor: not-allowed;
 }

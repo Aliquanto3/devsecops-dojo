@@ -1,6 +1,6 @@
 # DevSecOps Dojo
 
-> 🟢 **Version 0.2.0** : le socle git de la v0.1.0, plus les stations 1 à 3 de la chaîne DevSecOps (poste local, PR et CI, sécurité et qualité), dans les deux parcours, hors ligne. Notes de version : [docs/releases/v0.2.0.md](docs/releases/v0.2.0.md).
+> 🟢 **Version 0.2.1** : les fonctions de la v0.2 (socle git et stations 1 à 3 de la chaîne DevSecOps, dans les deux parcours, hors ligne) avec l'interface à la charte graphique générique v2.1 (thèmes sombre et clair). Notes de version : [docs/releases/v0.2.1.md](docs/releases/v0.2.1.md).
 
 Application pédagogique locale pour apprendre git et GitHub, puis la chaîne CI/CD et les
 concepts DevSecOps, pensée pour les personnes qui codent avec des agents (vibe coding) et
@@ -9,7 +9,7 @@ doivent comprendre ce que l'agent fait sur leur dépôt. Pédagogie inspirée de
 
 ## Ce que l'application propose
 
-La version 0.2.0 couvre le socle git et les stations 1 à 3 de la chaîne DevSecOps. La station 4 (livraison) arrive ensuite (voir [Jalons](#jalons)).
+La version 0.2.1 couvre le socle git et les stations 1 à 3 de la chaîne DevSecOps. La station 4 (livraison) arrive ensuite (voir [Jalons](#jalons)).
 
 - **Du vrai git, hors ligne** : un dépôt bac à sable, un dépôt distant local et un GitHub
   simulé (PR, revue, merge, commits d'un collègue), dans des vues synchronisées.
@@ -25,6 +25,11 @@ La version 0.2.0 couvre le socle git et les stations 1 à 3 de la chaîne DevSec
   pytest, protection de `main` et revue obligatoire, bandit (code vulnérable), pip-audit et SBOM
   (dépendance vulnérable), `uv lock --check`, quality gate de 80 % de couverture du nouveau code.
 - **Savoir en parler à un RSSI** : scénario d'entretien et fiche barrière → risque → preuve. (v0.3)
+
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/charte-v2/catalogue-clair.png">
+  <img src="docs/media/charte-v2/catalogue-sombre.png" alt="Catalogue de DevSecOps Dojo : deux parcours, en-tête avec pictogramme et filet or sous le titre">
+</picture>
 
 ## Installer sous Windows (sans droits administrateur)
 
