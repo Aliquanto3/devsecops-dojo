@@ -1,5 +1,21 @@
 # Journal des changements
 
+## 0.3.0
+
+### Changé : charte générique v2.1
+
+- **Interface à la charte v2.1** (`Aliquanto3/charte-generique`) : jetons de `tokens.css` pris par usage
+  dans les rôles de la charte, sombre d'abord (`:root`), clair selon le système ou `data-theme="light"`,
+  `data-theme="dark"` force le sombre. Aucune couleur en dur hors de `tokens.css`.
+- **Bouton principal neutre** (`--color-button`, `--color-on-button`), bouton secondaire en contour
+  `--color-line-strong`, anneau de focus `--color-focus`, filet or sous le titre de page, ombres dures
+  remplacées par le halo doux.
+- **Polices** : Sora 600 pour les titres (à la place de Fredoka, retirée), Atkinson Hyperlegible pour le
+  texte, JetBrains Mono pour le code. Le rapport HTML exporté suit la même palette et embarque Sora.
+- **Favicon et pictogramme** de la charte. Captures dans `docs/media/charte-v2/`.
+- Tests : contraste WCAG dans les deux thèmes sur une liste explicite de couples (`tests/test_charte.py`),
+  aucun hex hors des jetons, aucun aplat bleu de bouton.
+
 ## 0.2.0
 
 ### Changé : nouveau nom, nouvelle charte

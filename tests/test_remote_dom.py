@@ -19,7 +19,7 @@ from static_rules import STATIC
 from test_github_sim import BASE
 from test_repo_dom import MINIDOM
 from test_shell_js import NODE, _run
-from test_shell_ui import _blocks, _palette, _ratio
+from test_shell_ui import _palettes, _ratio
 
 from devsecops_dojo import github_sim
 from devsecops_dojo.config import Settings
@@ -336,10 +336,7 @@ REMOTE_PAIRS = (
 
 @pytest.mark.parametrize("theme", ["clair", "sombre"])
 def test_contrastes_de_la_vue_distante(theme: str) -> None:
-    light, _media, forced = _blocks((CSS / "tokens.css").read_text(encoding="utf-8"))
-    palette = _palette(light)
-    if theme == "sombre":
-        palette |= _palette(forced)
+    palette = _palettes((CSS / "tokens.css").read_text(encoding="utf-8"))[theme]
     low = [
         f"{fg}/{bg} {_ratio(palette[fg], palette[bg]):.2f} < {minimum}"
         for fg, bg, minimum in REMOTE_PAIRS

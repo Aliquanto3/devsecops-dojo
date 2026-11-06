@@ -97,7 +97,7 @@
   gap: var(--space-2);
   padding: var(--space-3);
   background: var(--color-surface-raised);
-  border: 2px solid var(--color-muted);
+  border: 2px solid var(--color-line-strong);
   border-radius: var(--radius-md);
 }
 
@@ -182,7 +182,7 @@
 }
 
 .pr-check.is-stale {
-  border: var(--stroke-min) dashed var(--color-muted);
+  border: var(--stroke-min) dashed var(--color-line-strong);
 }
 
 .check-glyph {
@@ -421,7 +421,7 @@
 
 .remote-view .check-output.is-selected,
 .remote-view .check-output:focus-visible {
-  outline: var(--stroke-min) solid var(--color-primary);
+  outline: var(--stroke-min) solid var(--color-focus);
   outline-offset: 2px;
   background: var(--color-produced-soft);
 }

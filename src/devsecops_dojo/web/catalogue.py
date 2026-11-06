@@ -272,8 +272,9 @@ def tool_labels(settings: Settings) -> dict[str, str]:
 
 
 REPORT_FONTS = (
-    ("atkinson-hyperlegible-400.woff2", "normal", 400),
-    ("atkinson-hyperlegible-700.woff2", "normal", 700),
+    ("atkinson-hyperlegible-400.woff2", "Atkinson Hyperlegible", "normal", 400),
+    ("atkinson-hyperlegible-700.woff2", "Atkinson Hyperlegible", "normal", 700),
+    ("sora-600.woff2", "Sora", "normal", 600),
 )
 """Polices jointes au rapport HTML, en data URI : le fichier s'affiche hors ligne (AD-13)."""
 
@@ -283,10 +284,10 @@ def report_font_css() -> str:
     fonts = Path(__file__).resolve().parent / "static" / "fonts"
     rules = []
     try:
-        for name, style, weight in REPORT_FONTS:
+        for name, family, style, weight in REPORT_FONTS:
             data = base64.b64encode((fonts / name).read_bytes()).decode("ascii")
             rules.append(
-                '@font-face { font-family: "Atkinson Hyperlegible"; '
+                f'@font-face {{ font-family: "{family}"; '
                 f"font-style: {style}; font-weight: {weight}; "
                 f'src: url("data:font/woff2;base64,{data}") format("woff2"); }}'
             )

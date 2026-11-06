@@ -104,9 +104,9 @@ def test_url_loopback_et_espaces_de_noms_permis(tmp_path: Path) -> None:
 
 def test_licence_de_police_exclue_mais_pas_le_code(tmp_path: Path) -> None:
     static = tmp_path / "static"
-    _write(static, "fonts/OFL-fredoka.txt", "See http://scripts.sil.org/OFL\n")
+    _write(static, "fonts/OFL-sora.txt", "See http://scripts.sil.org/OFL\n")
     assert static_url_violations(static) == []
-    _write(static, "fonts/OFL-fredoka.js", "fetch('http://scripts.sil.org/OFL');\n")
+    _write(static, "fonts/OFL-sora.js", "fetch('http://scripts.sil.org/OFL');\n")
     _write(static, "fonts/autre.txt", "http://scripts.sil.org/OFL\n")
     _write(static, "OFL-racine.txt", "http://scripts.sil.org/OFL\n")
     assert len(static_url_violations(static)) == 3

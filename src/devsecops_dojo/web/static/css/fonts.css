@@ -1,10 +1,10 @@
 /* Polices servies par l'application (WOFF2, licence OFL jointe dans ../fonts). Aucun CDN. */
 @font-face {
-  font-family: "Fredoka";
+  font-family: "Sora";
   font-style: normal;
-  font-weight: 300 700;
+  font-weight: 600;
   font-display: swap;
-  src: url("../fonts/fredoka-variable.woff2") format("woff2");
+  src: url("../fonts/sora-600.woff2") format("woff2");
 }
 
 @font-face {
