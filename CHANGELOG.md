@@ -1,6 +1,6 @@
 # Journal des changements
 
-## 0.3.0
+## 0.2.1
 
 ### Changé : charte générique v2.1
 

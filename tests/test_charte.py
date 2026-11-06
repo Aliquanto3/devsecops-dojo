@@ -104,11 +104,16 @@ def test_le_terminal_reste_sombre_dans_les_deux_themes(
 
 
 def test_aucun_hex_litteral_hors_des_jetons() -> None:
+    # Le favicon de la charte porte ses propres couleurs : un favicon ne lit pas `var()`.
+    sources = [
+        *(p for p in sorted(CSS.glob("*.css")) if p.name != "tokens.css"),
+        *sorted(STATIC.rglob("*.html")),
+        *(p for p in sorted(STATIC.rglob("*.svg")) if p.name != "favicon.svg"),
+    ]
     offenders = [
         f"{path.name}: {hexa}"
-        for path in sorted(CSS.glob("*.css"))
-        if path.name != "tokens.css"
-        for hexa in re.findall(r"#[0-9a-fA-F]{3,8}\b", path.read_text(encoding="utf-8"))
+        for path in sources
+        for hexa in re.findall(r"(?<!&)#[0-9a-fA-F]{3,8}\b", path.read_text(encoding="utf-8"))
     ]
     assert offenders == []
     assert not re.search(
@@ -118,13 +123,17 @@ def test_aucun_hex_litteral_hors_des_jetons() -> None:
 
 
 def test_le_bleu_n_est_jamais_un_aplat_de_bouton() -> None:
-    """Aucune règle de bouton, de pastille à bascule ou de déclencheur n'a d'aplat `primary`."""
-    button_like = re.compile(r"btn|button|pill|trigger|toggle|armed|menu")
+    """Aucune règle de bouton, de pastille à bascule ou de déclencheur n'a d'aplat `primary`.
+
+    `primary-soft` reste permis : c'est le fond de sélection de la charte (`primaire-doux`).
+    """
+    button_like = re.compile(r"btn|button|pill|trigger|toggle|armed|menu|pressed")
     offenders = []
     for path in sorted(CSS.glob("*.css")):
         for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", path.read_text(encoding="utf-8")):
             if button_like.search(selector) and re.search(
-                r"background(?:-color)?:\s*var\(--color-primary\)", body
+                r"background(?:-color)?:\s*var\(--color-(?:on-)?primary(?:-(?!soft\b)[a-z0-9-]+)?\)",
+                body,
             ):
                 offenders.append(f"{path.name}: {selector.strip()}")
     assert offenders == []
